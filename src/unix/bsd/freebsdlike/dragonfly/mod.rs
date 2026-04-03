@@ -52,21 +52,21 @@ extern_ty! {
     pub enum sem {}
 }
 
-c_enum! {
+e! {
     #[repr(u32)]
     pub enum lwpstat {
-        pub LSRUN = 1,
-        pub LSSTOP = 2,
-        pub LSSLEEP = 3,
+        LSRUN = 1,
+        LSSTOP = 2,
+        LSSLEEP = 3,
     }
 
     #[repr(u32)]
     pub enum procstat {
-        pub SIDL = 1,
-        pub SACTIVE = 2,
-        pub SSTOP = 3,
-        pub SZOMB = 4,
-        pub SCORE = 5,
+        SIDL = 1,
+        SACTIVE = 2,
+        SSTOP = 3,
+        SZOMB = 4,
+        SCORE = 5,
     }
 }
 
@@ -1088,8 +1088,6 @@ pub const LC_ALL_MASK: c_int = LC_COLLATE_MASK
 pub const TIOCSIG: c_ulong = 0x2000745f;
 pub const BTUARTDISC: c_int = 0x7;
 pub const TIOCDCDTIMESTAMP: c_ulong = 0x40107458;
-pub const TIOCMGDTRWAIT: c_ulong = 0x4004745a;
-pub const TIOCMSDTRWAIT: c_ulong = 0x8004745b;
 pub const TIOCISPTMASTER: c_ulong = 0x20007455;
 pub const TIOCMODG: c_ulong = 0x40047403;
 pub const TIOCMODS: c_ulong = 0x80047404;

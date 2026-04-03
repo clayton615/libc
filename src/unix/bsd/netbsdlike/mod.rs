@@ -341,12 +341,13 @@ pub const POSIX_MADV_SEQUENTIAL: c_int = 2;
 pub const POSIX_MADV_WILLNEED: c_int = 3;
 pub const POSIX_MADV_DONTNEED: c_int = 4;
 
-pub const POSIX_SPAWN_RESETIDS: c_short = 0x01;
-pub const POSIX_SPAWN_SETPGROUP: c_short = 0x02;
-pub const POSIX_SPAWN_SETSCHEDPARAM: c_short = 0x04;
-pub const POSIX_SPAWN_SETSCHEDULER: c_short = 0x08;
-pub const POSIX_SPAWN_SETSIGDEF: c_short = 0x10;
-pub const POSIX_SPAWN_SETSIGMASK: c_short = 0x20;
+// DIFF(main): changed to `c_short` in f62eb023ab
+pub const POSIX_SPAWN_RESETIDS: c_int = 0x01;
+pub const POSIX_SPAWN_SETPGROUP: c_int = 0x02;
+pub const POSIX_SPAWN_SETSCHEDPARAM: c_int = 0x04;
+pub const POSIX_SPAWN_SETSCHEDULER: c_int = 0x08;
+pub const POSIX_SPAWN_SETSIGDEF: c_int = 0x10;
+pub const POSIX_SPAWN_SETSIGMASK: c_int = 0x20;
 
 pub const PTHREAD_CREATE_JOINABLE: c_int = 0;
 pub const PTHREAD_CREATE_DETACHED: c_int = 1;
@@ -677,6 +678,7 @@ extern "C" {
         addrlen: *mut crate::socklen_t,
         flags: c_int,
     ) -> c_int;
+    pub fn mincore(addr: *mut c_void, len: size_t, vec: *mut c_char) -> c_int;
     #[cfg_attr(target_os = "netbsd", link_name = "__clock_getres50")]
     pub fn clock_getres(clk_id: crate::clockid_t, tp: *mut crate::timespec) -> c_int;
     #[cfg_attr(target_os = "netbsd", link_name = "__clock_gettime50")]
@@ -755,11 +757,14 @@ extern "C" {
     pub fn shmdt(shmaddr: *const c_void) -> c_int;
     #[cfg_attr(target_os = "netbsd", link_name = "__shmctl50")]
     pub fn shmctl(shmid: c_int, cmd: c_int, buf: *mut crate::shmid_ds) -> c_int;
+
+    // DIFF(main): changed to `*const *mut` in e77f551de9
     pub fn execvpe(
         file: *const c_char,
-        argv: *const *mut c_char,
-        envp: *const *mut c_char,
+        argv: *const *const c_char,
+        envp: *const *const c_char,
     ) -> c_int;
+
     pub fn waitid(
         idtype: idtype_t,
         id: crate::id_t,

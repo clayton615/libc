@@ -130,6 +130,23 @@ impl siginfo_t {
 }
 
 s! {
+    pub struct aiocb {
+        pub aio_fildes: c_int,
+        pub aio_lio_opcode: c_int,
+        pub aio_reqprio: c_int,
+        pub aio_buf: *mut c_void,
+        pub aio_nbytes: size_t,
+        pub aio_sigevent: crate::sigevent,
+        __td: *mut c_void,
+        __lock: [c_int; 2],
+        __err: c_int,
+        __ret: ssize_t,
+        pub aio_offset: off_t,
+        __next: *mut c_void,
+        __prev: *mut c_void,
+        __dummy4: [c_char; 32 - 2 * size_of::<*const ()>()],
+    }
+
     #[repr(align(8))]
     pub struct fanotify_event_metadata {
         pub event_len: c_uint,
@@ -466,25 +483,6 @@ s! {
     }
 }
 
-s_no_extra_traits! {
-    pub struct aiocb {
-        pub aio_fildes: c_int,
-        pub aio_lio_opcode: c_int,
-        pub aio_reqprio: c_int,
-        pub aio_buf: *mut c_void,
-        pub aio_nbytes: size_t,
-        pub aio_sigevent: crate::sigevent,
-        __td: *mut c_void,
-        __lock: [c_int; 2],
-        __err: c_int,
-        __ret: ssize_t,
-        pub aio_offset: off_t,
-        __next: *mut c_void,
-        __prev: *mut c_void,
-        __dummy4: [c_char; 32 - 2 * size_of::<*const ()>()],
-    }
-}
-
 // include/sys/mman.h
 /*
  * Huge page size encoding when MAP_HUGETLB is specified, and a huge page
@@ -741,6 +739,8 @@ pub const MAXTC: c_long = 6;
 
 pub const _CS_V6_ENV: c_int = 1148;
 pub const _CS_V7_ENV: c_int = 1149;
+
+pub const CLONE_NEWTIME: c_int = 0x80;
 
 pub const UT_HOSTSIZE: usize = 256;
 pub const UT_LINESIZE: usize = 32;

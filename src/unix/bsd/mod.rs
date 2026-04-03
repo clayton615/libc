@@ -583,6 +583,7 @@ extern "C" {
     pub fn ioctl(fd: c_int, request: c_ulong, ...) -> c_int;
     pub fn kqueue() -> c_int;
     pub fn unmount(target: *const c_char, arg: c_int) -> c_int;
+    pub fn syscall(num: c_int, ...) -> c_int;
     #[cfg_attr(target_os = "netbsd", link_name = "__getpwent50")]
     pub fn getpwent() -> *mut passwd;
     pub fn setpwent();
@@ -872,14 +873,6 @@ extern "C" {
     pub fn devname(dev: crate::dev_t, mode_t: crate::mode_t) -> *mut c_char;
 
     pub fn issetugid() -> c_int;
-}
-
-cfg_if! {
-    if #[cfg(not(target_os = "openbsd"))] {
-        extern "C" {
-            pub fn syscall(num: c_int, ...) -> c_int;
-        }
-    }
 }
 
 cfg_if! {

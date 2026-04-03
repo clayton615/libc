@@ -220,6 +220,11 @@ s! {
         pub l_linger: c_int,
     }
 
+    pub struct sigval {
+        // Actually a union of an int and a void*
+        pub sival_ptr: *mut c_void,
+    }
+
     // <sys/time.h>
     pub struct itimerval {
         pub it_interval: crate::timeval,
@@ -388,7 +393,7 @@ s! {
 
     pub struct epoll_event {
         pub events: u32,
-        pub data: epoll_data,
+        pub u64: u64,
     }
 
     pub struct lconv {
@@ -442,7 +447,7 @@ s! {
         pub ifa_flags: c_uint,
         pub ifa_addr: *mut crate::sockaddr,
         pub ifa_netmask: *mut crate::sockaddr,
-        pub ifa_ifu: __c_anonymous_ifaddrs_ifa_ifu,
+        pub ifa_ifu: *mut crate::sockaddr, // FIXME(union) This should be a union
         pub ifa_data: *mut c_void,
     }
 
@@ -1020,65 +1025,6 @@ s! {
     }
 }
 
-s_no_extra_traits! {
-    pub union sigval {
-        pub sival_int: c_int,
-        pub sival_ptr: *mut c_void,
-    }
-
-    pub union epoll_data {
-        pub ptr: *mut c_void,
-        pub fd: c_int,
-        pub u32: u32,
-        pub u64: u64,
-    }
-
-    pub union __c_anonymous_ifaddrs_ifa_ifu {
-        ifu_broadaddr: *mut sockaddr,
-        ifu_dstaddr: *mut sockaddr,
-    }
-}
-
-cfg_if! {
-    if #[cfg(feature = "extra_traits")] {
-        impl PartialEq for sigval {
-            fn eq(&self, _other: &sigval) -> bool {
-                unimplemented!("traits")
-            }
-        }
-        impl Eq for sigval {}
-        impl hash::Hash for sigval {
-            fn hash<H: hash::Hasher>(&self, _state: &mut H) {
-                unimplemented!("traits")
-            }
-        }
-
-        impl PartialEq for epoll_data {
-            fn eq(&self, _other: &epoll_data) -> bool {
-                unimplemented!("traits")
-            }
-        }
-        impl Eq for epoll_data {}
-        impl hash::Hash for epoll_data {
-            fn hash<H: hash::Hasher>(&self, _state: &mut H) {
-                unimplemented!("traits")
-            }
-        }
-
-        impl PartialEq for __c_anonymous_ifaddrs_ifa_ifu {
-            fn eq(&self, _other: &__c_anonymous_ifaddrs_ifa_ifu) -> bool {
-                unimplemented!("traits")
-            }
-        }
-        impl Eq for __c_anonymous_ifaddrs_ifa_ifu {}
-        impl hash::Hash for __c_anonymous_ifaddrs_ifa_ifu {
-            fn hash<H: hash::Hasher>(&self, _state: &mut H) {
-                unimplemented!("traits")
-            }
-        }
-    }
-}
-
 // PUB_CONST
 
 pub const INT_MIN: c_int = -2147483648;
@@ -1594,7 +1540,7 @@ pub const SS_DISABLE: c_int = 2;
 
 pub const PATH_MAX: c_int = 4096;
 
-pub const FD_SETSIZE: c_int = 1024;
+pub const FD_SETSIZE: usize = 1024;
 
 pub const EPOLLIN: c_int = 0x1;
 pub const EPOLLPRI: c_int = 0x2;
@@ -3406,13 +3352,20 @@ extern "C" {
     pub fn close(fd: c_int) -> c_int;
     pub fn dup(fd: c_int) -> c_int;
     pub fn dup2(src: c_int, dst: c_int) -> c_int;
+
     pub fn execl(path: *const c_char, arg0: *const c_char, ...) -> c_int;
     pub fn execle(path: *const c_char, arg0: *const c_char, ...) -> c_int;
     pub fn execlp(file: *const c_char, arg0: *const c_char, ...) -> c_int;
-    pub fn execv(prog: *const c_char, argv: *const *mut c_char) -> c_int;
-    pub fn execve(prog: *const c_char, argv: *const *mut c_char, envp: *const *mut c_char)
-        -> c_int;
-    pub fn execvp(c: *const c_char, argv: *const *mut c_char) -> c_int;
+
+    // DIFF(main): changed to `*const *mut` in e77f551de9
+    pub fn execv(prog: *const c_char, argv: *const *const c_char) -> c_int;
+    pub fn execve(
+        prog: *const c_char,
+        argv: *const *const c_char,
+        envp: *const *const c_char,
+    ) -> c_int;
+    pub fn execvp(c: *const c_char, argv: *const *const c_char) -> c_int;
+
     pub fn fork() -> pid_t;
     pub fn fpathconf(filedes: c_int, name: c_int) -> c_long;
     pub fn getcwd(buf: *mut c_char, size: size_t) -> *mut c_char;
@@ -3759,12 +3712,14 @@ extern "C" {
         termp: *const termios,
         winp: *const crate::winsize,
     ) -> c_int;
+
+    // DIFF(main): changed to `*const *mut` in e77f551de9
     pub fn execvpe(
         file: *const c_char,
-        argv: *const *mut c_char,
-        envp: *const *mut c_char,
+        argv: *const *const c_char,
+        envp: *const *const c_char,
     ) -> c_int;
-    pub fn fexecve(fd: c_int, argv: *const *mut c_char, envp: *const *mut c_char) -> c_int;
+    pub fn fexecve(fd: c_int, argv: *const *const c_char, envp: *const *const c_char) -> c_int;
 
     pub fn ioctl(fd: c_int, request: c_int, ...) -> c_int;
 

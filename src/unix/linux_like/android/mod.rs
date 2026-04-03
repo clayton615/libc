@@ -579,6 +579,13 @@ s! {
 }
 
 s_no_extra_traits! {
+    /// WARNING: The `PartialEq`, `Eq` and `Hash` implementations of this
+    /// type are unsound and will be removed in the future.
+    #[deprecated(
+        note = "this struct has unsafe trait implementations that will be \
+                removed in the future",
+        since = "0.2.80"
+    )]
     pub struct af_alg_iv {
         pub ivlen: u32,
         pub iv: [c_uchar; 0],
@@ -611,8 +618,11 @@ s_no_extra_traits! {
         pub ifcu_req: *mut crate::ifreq,
     }
 
+    /*  Structure used in SIOCGIFCONF request.  Used to retrieve interface
+    configuration for machine (useful for programs which must know all
+    networks accessible).  */
     pub struct ifconf {
-        pub ifc_len: c_int,
+        pub ifc_len: c_int, /* Size of buffer.  */
         pub ifc_ifcu: __c_anonymous_ifc_ifcu,
     }
 
@@ -646,6 +656,34 @@ s_no_extra_traits! {
     struct siginfo_f {
         _siginfo_base: [c_int; 3],
         sifields: sifields,
+    }
+}
+
+cfg_if! {
+    if #[cfg(feature = "extra_traits")] {
+        #[allow(deprecated)]
+        impl af_alg_iv {
+            fn as_slice(&self) -> &[u8] {
+                unsafe { ::core::slice::from_raw_parts(self.iv.as_ptr(), self.ivlen as usize) }
+            }
+        }
+
+        #[allow(deprecated)]
+        impl PartialEq for af_alg_iv {
+            fn eq(&self, other: &af_alg_iv) -> bool {
+                *self.as_slice() == *other.as_slice()
+            }
+        }
+
+        #[allow(deprecated)]
+        impl Eq for af_alg_iv {}
+
+        #[allow(deprecated)]
+        impl hash::Hash for af_alg_iv {
+            fn hash<H: hash::Hasher>(&self, state: &mut H) {
+                self.as_slice().hash(state);
+            }
+        }
     }
 }
 
@@ -2634,6 +2672,7 @@ pub const SCHED_DEADLINE: c_int = 6;
 
 pub const SCHED_RESET_ON_FORK: c_int = 0x40000000;
 
+pub const CLONE_PIDFD: c_int = 0x1000;
 pub const CLONE_CLEAR_SIGHAND: c_ulonglong = 0x100000000;
 pub const CLONE_INTO_CGROUP: c_ulonglong = 0x200000000;
 

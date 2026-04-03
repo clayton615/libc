@@ -43,7 +43,7 @@ s! {
     pub struct stat {
         pub st_dev: dev_t,
         pub st_ino: ino_t,
-        pub st_mode: c_ushort,
+        pub st_mode: u16,
         pub st_nlink: c_short,
         pub st_uid: c_short,
         pub st_gid: c_short,
@@ -128,13 +128,13 @@ pub const _O_OBTAIN_DIR: c_int = 0x2000;
 pub const O_SEQUENTIAL: c_int = 0x0020;
 pub const O_RANDOM: c_int = 0x0010;
 
-pub const S_IFCHR: c_ushort = 0o2_0000;
-pub const S_IFDIR: c_ushort = 0o4_0000;
-pub const S_IFREG: c_ushort = 0o10_0000;
-pub const S_IFMT: c_ushort = 0o17_0000;
-pub const S_IEXEC: c_ushort = 0o0100;
-pub const S_IWRITE: c_ushort = 0o0200;
-pub const S_IREAD: c_ushort = 0o0400;
+pub const S_IFCHR: c_int = 0o2_0000;
+pub const S_IFDIR: c_int = 0o4_0000;
+pub const S_IFREG: c_int = 0o10_0000;
+pub const S_IFMT: c_int = 0o17_0000;
+pub const S_IEXEC: c_int = 0o0100;
+pub const S_IWRITE: c_int = 0o0200;
+pub const S_IREAD: c_int = 0o0400;
 
 pub const LC_ALL: c_int = 0;
 pub const LC_COLLATE: c_int = 1;
@@ -245,6 +245,14 @@ pub const SIG_ACK: crate::sighandler_t = 4;
 pub const L_tmpnam: c_uint = 260;
 pub const TMP_MAX: c_uint = 0x7fff_ffff;
 
+// DIFF(main): removed in 458c58f409
+// FIXME(msrv): done by `std` starting in 1.79.0
+// inline comment below appeases style checker
+#[cfg(all(target_env = "msvc", feature = "rustc-dep-of-std"))] // " if "
+#[link(name = "msvcrt", cfg(not(target_feature = "crt-static")))]
+#[link(name = "libcmt", cfg(target_feature = "crt-static"))]
+extern "C" {}
+
 extern_ty! {
     pub enum FILE {}
     pub enum fpos_t {} // FIXME(windows): fill this out with a struct
@@ -260,17 +268,6 @@ cfg_if! {
         extern "C" {
             pub fn printf(format: *const c_char, ...) -> c_int;
             pub fn fprintf(stream: *mut FILE, format: *const c_char, ...) -> c_int;
-            pub fn snprintf(
-                buffer: *mut c_char,
-                count: size_t,
-                format: *const c_char,
-                ...
-            ) -> c_int;
-            pub fn sprintf(buffer: *mut c_char, format: *const c_char, ...) -> c_int;
-
-            pub fn scanf(format: *const c_char, ...) -> c_int;
-            pub fn sscanf(buffer: *const c_char, format: *const c_char, ...) -> c_int;
-            pub fn fscanf(stream: *mut FILE, format: *const c_char, ...) -> c_int;
         }
     }
 }
@@ -470,21 +467,23 @@ extern "C" {
     #[link_name = "_wexeclpe"]
     pub fn wexeclpe(path: *const wchar_t, arg0: *const wchar_t, ...) -> intptr_t;
     #[link_name = "_execv"]
+    // DIFF(main): changed to `intptr_t` in e77f551de9
     pub fn execv(prog: *const c_char, argv: *const *const c_char) -> intptr_t;
     #[link_name = "_execve"]
     pub fn execve(
         prog: *const c_char,
         argv: *const *const c_char,
         envp: *const *const c_char,
-    ) -> intptr_t;
+    ) -> c_int;
     #[link_name = "_execvp"]
-    pub fn execvp(c: *const c_char, argv: *const *const c_char) -> intptr_t;
+    pub fn execvp(c: *const c_char, argv: *const *const c_char) -> c_int;
     #[link_name = "_execvpe"]
     pub fn execvpe(
         c: *const c_char,
         argv: *const *const c_char,
         envp: *const *const c_char,
-    ) -> intptr_t;
+    ) -> c_int;
+
     #[link_name = "_wexecv"]
     pub fn wexecv(prog: *const wchar_t, argv: *const *const wchar_t) -> intptr_t;
     #[link_name = "_wexecve"]

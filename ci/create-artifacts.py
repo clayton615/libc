@@ -4,8 +4,6 @@
 This is useful for seeing what exactly `ctest` is running.
 """
 
-print("very first line of the script")  # debugging
-
 import os
 import subprocess as sp
 import sys

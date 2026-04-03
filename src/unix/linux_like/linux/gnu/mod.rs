@@ -20,6 +20,28 @@ cfg_if! {
 }
 
 s! {
+    pub struct aiocb {
+        pub aio_fildes: c_int,
+        pub aio_lio_opcode: c_int,
+        pub aio_reqprio: c_int,
+        pub aio_buf: *mut c_void,
+        pub aio_nbytes: size_t,
+        pub aio_sigevent: crate::sigevent,
+        __next_prio: *mut aiocb,
+        __abs_prio: c_int,
+        __policy: c_int,
+        __error_code: c_int,
+        __return_value: ssize_t,
+        pub aio_offset: off_t,
+        #[cfg(all(
+            not(gnu_file_offset_bits64),
+            not(target_arch = "x86_64"),
+            target_pointer_width = "32"
+        ))]
+        __unused1: Padding<[c_char; 4]>,
+        __glibc_reserved: Padding<[c_char; 32]>,
+    }
+
     pub struct __exit_status {
         pub e_termination: c_short,
         pub e_exit: c_short,
@@ -172,7 +194,7 @@ s! {
     }
 
     pub struct __c_anonymous_ptrace_syscall_info_exit {
-        pub rval: crate::__s64,
+        pub sval: crate::__s64,
         pub is_error: crate::__u8,
     }
 
@@ -385,29 +407,6 @@ impl siginfo_t {
 }
 
 s_no_extra_traits! {
-    pub struct aiocb {
-        pub aio_fildes: c_int,
-        pub aio_lio_opcode: c_int,
-        pub aio_reqprio: c_int,
-        pub aio_buf: *mut c_void,
-        pub aio_nbytes: size_t,
-        pub aio_sigevent: crate::sigevent,
-        __next_prio: *mut aiocb,
-        __abs_prio: c_int,
-        __policy: c_int,
-        __error_code: c_int,
-        __return_value: ssize_t,
-        // FIXME(off64): visible fields depend on __USE_FILE_OFFSET64
-        pub aio_offset: off_t,
-        #[cfg(all(
-            not(gnu_file_offset_bits64),
-            not(target_arch = "x86_64"),
-            target_pointer_width = "32"
-        ))]
-        __pad: Padding<[c_char; 4]>,
-        __glibc_reserved: Padding<[c_char; 32]>,
-    }
-
     // linux/if_ether.h
 
     #[repr(C, packed)]
@@ -766,8 +765,8 @@ pub const PTRACE_SYSCALL_INFO_NONE: crate::__u8 = 0;
 pub const PTRACE_SYSCALL_INFO_ENTRY: crate::__u8 = 1;
 pub const PTRACE_SYSCALL_INFO_EXIT: crate::__u8 = 2;
 pub const PTRACE_SYSCALL_INFO_SECCOMP: crate::__u8 = 3;
-pub const PTRACE_SET_SYSCALL_USER_DISPATCH_CONFIG: c_uint = 0x4210;
-pub const PTRACE_GET_SYSCALL_USER_DISPATCH_CONFIG: c_uint = 0x4211;
+pub const PTRACE_SET_SYSCALL_USER_DISPATCH_CONFIG: crate::__u8 = 0x4210;
+pub const PTRACE_GET_SYSCALL_USER_DISPATCH_CONFIG: crate::__u8 = 0x4211;
 
 // linux/rtnetlink.h
 pub const TCA_PAD: c_ushort = 9;
@@ -811,6 +810,12 @@ pub const GENL_ID_VFS_DQUOT: c_int = crate::NLMSG_MIN_TYPE + 1;
 pub const GENL_ID_PMCRAID: c_int = crate::NLMSG_MIN_TYPE + 2;
 
 pub const ELFOSABI_ARM_AEABI: u8 = 64;
+
+// linux/sched.h
+pub const CLONE_NEWTIME: c_int = 0x80;
+// DIFF(main): changed to `c_ulonglong` in e9abac9ac2
+pub const CLONE_CLEAR_SIGHAND: c_int = 0x100000000;
+pub const CLONE_INTO_CGROUP: c_int = 0x200000000;
 
 pub const M_MXFAST: c_int = 1;
 pub const M_NLBLKS: c_int = 2;

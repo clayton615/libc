@@ -29,6 +29,8 @@
 #![cfg_attr(feature = "rustc-dep-of-std", allow(internal_features))]
 // Some targets don't need `link_cfg` and emit a warning.
 #![cfg_attr(feature = "rustc-dep-of-std", allow(unused_features))]
+// DIFF(1.0): The thread local references that raise this lint were removed in 1.0
+#![cfg_attr(feature = "rustc-dep-of-std", allow(static_mut_refs))]
 #![cfg_attr(not(feature = "rustc-dep-of-std"), no_std)]
 #![cfg_attr(feature = "rustc-dep-of-std", no_core)]
 
@@ -70,6 +72,14 @@ cfg_if! {
 
         mod switch;
         pub use switch::*;
+
+        prelude!();
+    } else if #[cfg(target_os = "psp")] {
+        mod primitives;
+        pub use primitives::*;
+
+        mod psp;
+        pub use crate::psp::*;
 
         prelude!();
     } else if #[cfg(target_os = "vxworks")] {

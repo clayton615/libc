@@ -56,144 +56,215 @@ pub type sctp_assoc_t = u32;
 
 pub type eventfd_t = u64;
 
-c_enum! {
-    #[repr(u32)]
-    pub enum devstat_support_flags {
-        pub DEVSTAT_ALL_SUPPORTED = 0x00,
-        pub DEVSTAT_NO_BLOCKSIZE = 0x01,
-        pub DEVSTAT_NO_ORDERED_TAGS = 0x02,
-        pub DEVSTAT_BS_UNAVAILABLE = 0x04,
+#[derive(Debug)]
+#[cfg_attr(feature = "extra_traits", derive(Hash, PartialEq, Eq))]
+#[repr(u32)]
+pub enum devstat_support_flags {
+    DEVSTAT_ALL_SUPPORTED = 0x00,
+    DEVSTAT_NO_BLOCKSIZE = 0x01,
+    DEVSTAT_NO_ORDERED_TAGS = 0x02,
+    DEVSTAT_BS_UNAVAILABLE = 0x04,
+}
+impl Copy for devstat_support_flags {}
+impl Clone for devstat_support_flags {
+    fn clone(&self) -> devstat_support_flags {
+        *self
     }
+}
 
-    #[repr(u32)]
-    pub enum devstat_trans_flags {
-        pub DEVSTAT_NO_DATA = 0x00,
-        pub DEVSTAT_READ = 0x01,
-        pub DEVSTAT_WRITE = 0x02,
-        pub DEVSTAT_FREE = 0x03,
+#[derive(Debug)]
+#[cfg_attr(feature = "extra_traits", derive(Hash, PartialEq, Eq))]
+#[repr(u32)]
+pub enum devstat_trans_flags {
+    DEVSTAT_NO_DATA = 0x00,
+    DEVSTAT_READ = 0x01,
+    DEVSTAT_WRITE = 0x02,
+    DEVSTAT_FREE = 0x03,
+}
+
+impl Copy for devstat_trans_flags {}
+impl Clone for devstat_trans_flags {
+    fn clone(&self) -> devstat_trans_flags {
+        *self
     }
+}
 
-    #[repr(u32)]
-    pub enum devstat_tag_type {
-        pub DEVSTAT_TAG_SIMPLE = 0x00,
-        pub DEVSTAT_TAG_HEAD = 0x01,
-        pub DEVSTAT_TAG_ORDERED = 0x02,
-        pub DEVSTAT_TAG_NONE = 0x03,
+#[derive(Debug)]
+#[cfg_attr(feature = "extra_traits", derive(Hash, PartialEq, Eq))]
+#[repr(u32)]
+pub enum devstat_tag_type {
+    DEVSTAT_TAG_SIMPLE = 0x00,
+    DEVSTAT_TAG_HEAD = 0x01,
+    DEVSTAT_TAG_ORDERED = 0x02,
+    DEVSTAT_TAG_NONE = 0x03,
+}
+impl Copy for devstat_tag_type {}
+impl Clone for devstat_tag_type {
+    fn clone(&self) -> devstat_tag_type {
+        *self
     }
+}
 
-    #[repr(u32)]
-    pub enum devstat_match_flags {
-        pub DEVSTAT_MATCH_NONE = 0x00,
-        pub DEVSTAT_MATCH_TYPE = 0x01,
-        pub DEVSTAT_MATCH_IF = 0x02,
-        pub DEVSTAT_MATCH_PASS = 0x04,
+#[derive(Debug)]
+#[cfg_attr(feature = "extra_traits", derive(Hash, PartialEq, Eq))]
+#[repr(u32)]
+pub enum devstat_match_flags {
+    DEVSTAT_MATCH_NONE = 0x00,
+    DEVSTAT_MATCH_TYPE = 0x01,
+    DEVSTAT_MATCH_IF = 0x02,
+    DEVSTAT_MATCH_PASS = 0x04,
+}
+impl Copy for devstat_match_flags {}
+impl Clone for devstat_match_flags {
+    fn clone(&self) -> devstat_match_flags {
+        *self
     }
+}
 
-    #[repr(u32)]
-    pub enum devstat_priority {
-        pub DEVSTAT_PRIORITY_MIN = 0x000,
-        pub DEVSTAT_PRIORITY_OTHER = 0x020,
-        pub DEVSTAT_PRIORITY_PASS = 0x030,
-        pub DEVSTAT_PRIORITY_FD = 0x040,
-        pub DEVSTAT_PRIORITY_WFD = 0x050,
-        pub DEVSTAT_PRIORITY_TAPE = 0x060,
-        pub DEVSTAT_PRIORITY_CD = 0x090,
-        pub DEVSTAT_PRIORITY_DISK = 0x110,
-        pub DEVSTAT_PRIORITY_ARRAY = 0x120,
-        pub DEVSTAT_PRIORITY_MAX = 0xfff,
+#[derive(Debug)]
+#[cfg_attr(feature = "extra_traits", derive(Hash, PartialEq, Eq))]
+#[repr(u32)]
+pub enum devstat_priority {
+    DEVSTAT_PRIORITY_MIN = 0x000,
+    DEVSTAT_PRIORITY_OTHER = 0x020,
+    DEVSTAT_PRIORITY_PASS = 0x030,
+    DEVSTAT_PRIORITY_FD = 0x040,
+    DEVSTAT_PRIORITY_WFD = 0x050,
+    DEVSTAT_PRIORITY_TAPE = 0x060,
+    DEVSTAT_PRIORITY_CD = 0x090,
+    DEVSTAT_PRIORITY_DISK = 0x110,
+    DEVSTAT_PRIORITY_ARRAY = 0x120,
+    DEVSTAT_PRIORITY_MAX = 0xfff,
+}
+impl Copy for devstat_priority {}
+impl Clone for devstat_priority {
+    fn clone(&self) -> devstat_priority {
+        *self
     }
+}
 
-    #[repr(u32)]
-    pub enum devstat_type_flags {
-        pub DEVSTAT_TYPE_DIRECT = 0x000,
-        pub DEVSTAT_TYPE_SEQUENTIAL = 0x001,
-        pub DEVSTAT_TYPE_PRINTER = 0x002,
-        pub DEVSTAT_TYPE_PROCESSOR = 0x003,
-        pub DEVSTAT_TYPE_WORM = 0x004,
-        pub DEVSTAT_TYPE_CDROM = 0x005,
-        pub DEVSTAT_TYPE_SCANNER = 0x006,
-        pub DEVSTAT_TYPE_OPTICAL = 0x007,
-        pub DEVSTAT_TYPE_CHANGER = 0x008,
-        pub DEVSTAT_TYPE_COMM = 0x009,
-        pub DEVSTAT_TYPE_ASC0 = 0x00a,
-        pub DEVSTAT_TYPE_ASC1 = 0x00b,
-        pub DEVSTAT_TYPE_STORARRAY = 0x00c,
-        pub DEVSTAT_TYPE_ENCLOSURE = 0x00d,
-        pub DEVSTAT_TYPE_FLOPPY = 0x00e,
-        pub DEVSTAT_TYPE_MASK = 0x00f,
-        pub DEVSTAT_TYPE_IF_SCSI = 0x010,
-        pub DEVSTAT_TYPE_IF_IDE = 0x020,
-        pub DEVSTAT_TYPE_IF_OTHER = 0x030,
-        pub DEVSTAT_TYPE_IF_MASK = 0x0f0,
-        pub DEVSTAT_TYPE_PASS = 0x100,
+#[derive(Debug)]
+#[cfg_attr(feature = "extra_traits", derive(Hash, PartialEq, Eq))]
+#[repr(u32)]
+pub enum devstat_type_flags {
+    DEVSTAT_TYPE_DIRECT = 0x000,
+    DEVSTAT_TYPE_SEQUENTIAL = 0x001,
+    DEVSTAT_TYPE_PRINTER = 0x002,
+    DEVSTAT_TYPE_PROCESSOR = 0x003,
+    DEVSTAT_TYPE_WORM = 0x004,
+    DEVSTAT_TYPE_CDROM = 0x005,
+    DEVSTAT_TYPE_SCANNER = 0x006,
+    DEVSTAT_TYPE_OPTICAL = 0x007,
+    DEVSTAT_TYPE_CHANGER = 0x008,
+    DEVSTAT_TYPE_COMM = 0x009,
+    DEVSTAT_TYPE_ASC0 = 0x00a,
+    DEVSTAT_TYPE_ASC1 = 0x00b,
+    DEVSTAT_TYPE_STORARRAY = 0x00c,
+    DEVSTAT_TYPE_ENCLOSURE = 0x00d,
+    DEVSTAT_TYPE_FLOPPY = 0x00e,
+    DEVSTAT_TYPE_MASK = 0x00f,
+    DEVSTAT_TYPE_IF_SCSI = 0x010,
+    DEVSTAT_TYPE_IF_IDE = 0x020,
+    DEVSTAT_TYPE_IF_OTHER = 0x030,
+    DEVSTAT_TYPE_IF_MASK = 0x0f0,
+    DEVSTAT_TYPE_PASS = 0x100,
+}
+impl Copy for devstat_type_flags {}
+impl Clone for devstat_type_flags {
+    fn clone(&self) -> devstat_type_flags {
+        *self
     }
+}
 
-    #[repr(u32)]
-    pub enum devstat_metric {
-        pub DSM_NONE,
-        pub DSM_TOTAL_BYTES,
-        pub DSM_TOTAL_BYTES_READ,
-        pub DSM_TOTAL_BYTES_WRITE,
-        pub DSM_TOTAL_TRANSFERS,
-        pub DSM_TOTAL_TRANSFERS_READ,
-        pub DSM_TOTAL_TRANSFERS_WRITE,
-        pub DSM_TOTAL_TRANSFERS_OTHER,
-        pub DSM_TOTAL_BLOCKS,
-        pub DSM_TOTAL_BLOCKS_READ,
-        pub DSM_TOTAL_BLOCKS_WRITE,
-        pub DSM_KB_PER_TRANSFER,
-        pub DSM_KB_PER_TRANSFER_READ,
-        pub DSM_KB_PER_TRANSFER_WRITE,
-        pub DSM_TRANSFERS_PER_SECOND,
-        pub DSM_TRANSFERS_PER_SECOND_READ,
-        pub DSM_TRANSFERS_PER_SECOND_WRITE,
-        pub DSM_TRANSFERS_PER_SECOND_OTHER,
-        pub DSM_MB_PER_SECOND,
-        pub DSM_MB_PER_SECOND_READ,
-        pub DSM_MB_PER_SECOND_WRITE,
-        pub DSM_BLOCKS_PER_SECOND,
-        pub DSM_BLOCKS_PER_SECOND_READ,
-        pub DSM_BLOCKS_PER_SECOND_WRITE,
-        pub DSM_MS_PER_TRANSACTION,
-        pub DSM_MS_PER_TRANSACTION_READ,
-        pub DSM_MS_PER_TRANSACTION_WRITE,
-        pub DSM_SKIP,
-        pub DSM_TOTAL_BYTES_FREE,
-        pub DSM_TOTAL_TRANSFERS_FREE,
-        pub DSM_TOTAL_BLOCKS_FREE,
-        pub DSM_KB_PER_TRANSFER_FREE,
-        pub DSM_MB_PER_SECOND_FREE,
-        pub DSM_TRANSFERS_PER_SECOND_FREE,
-        pub DSM_BLOCKS_PER_SECOND_FREE,
-        pub DSM_MS_PER_TRANSACTION_OTHER,
-        pub DSM_MS_PER_TRANSACTION_FREE,
-        pub DSM_BUSY_PCT,
-        pub DSM_QUEUE_LENGTH,
-        pub DSM_TOTAL_DURATION,
-        pub DSM_TOTAL_DURATION_READ,
-        pub DSM_TOTAL_DURATION_WRITE,
-        pub DSM_TOTAL_DURATION_FREE,
-        pub DSM_TOTAL_DURATION_OTHER,
-        pub DSM_TOTAL_BUSY_TIME,
-        pub DSM_MAX,
+#[derive(Debug)]
+#[cfg_attr(feature = "extra_traits", derive(Hash, PartialEq, Eq))]
+#[repr(u32)]
+pub enum devstat_metric {
+    DSM_NONE,
+    DSM_TOTAL_BYTES,
+    DSM_TOTAL_BYTES_READ,
+    DSM_TOTAL_BYTES_WRITE,
+    DSM_TOTAL_TRANSFERS,
+    DSM_TOTAL_TRANSFERS_READ,
+    DSM_TOTAL_TRANSFERS_WRITE,
+    DSM_TOTAL_TRANSFERS_OTHER,
+    DSM_TOTAL_BLOCKS,
+    DSM_TOTAL_BLOCKS_READ,
+    DSM_TOTAL_BLOCKS_WRITE,
+    DSM_KB_PER_TRANSFER,
+    DSM_KB_PER_TRANSFER_READ,
+    DSM_KB_PER_TRANSFER_WRITE,
+    DSM_TRANSFERS_PER_SECOND,
+    DSM_TRANSFERS_PER_SECOND_READ,
+    DSM_TRANSFERS_PER_SECOND_WRITE,
+    DSM_TRANSFERS_PER_SECOND_OTHER,
+    DSM_MB_PER_SECOND,
+    DSM_MB_PER_SECOND_READ,
+    DSM_MB_PER_SECOND_WRITE,
+    DSM_BLOCKS_PER_SECOND,
+    DSM_BLOCKS_PER_SECOND_READ,
+    DSM_BLOCKS_PER_SECOND_WRITE,
+    DSM_MS_PER_TRANSACTION,
+    DSM_MS_PER_TRANSACTION_READ,
+    DSM_MS_PER_TRANSACTION_WRITE,
+    DSM_SKIP,
+    DSM_TOTAL_BYTES_FREE,
+    DSM_TOTAL_TRANSFERS_FREE,
+    DSM_TOTAL_BLOCKS_FREE,
+    DSM_KB_PER_TRANSFER_FREE,
+    DSM_MB_PER_SECOND_FREE,
+    DSM_TRANSFERS_PER_SECOND_FREE,
+    DSM_BLOCKS_PER_SECOND_FREE,
+    DSM_MS_PER_TRANSACTION_OTHER,
+    DSM_MS_PER_TRANSACTION_FREE,
+    DSM_BUSY_PCT,
+    DSM_QUEUE_LENGTH,
+    DSM_TOTAL_DURATION,
+    DSM_TOTAL_DURATION_READ,
+    DSM_TOTAL_DURATION_WRITE,
+    DSM_TOTAL_DURATION_FREE,
+    DSM_TOTAL_DURATION_OTHER,
+    DSM_TOTAL_BUSY_TIME,
+    DSM_MAX,
+}
+impl Copy for devstat_metric {}
+impl Clone for devstat_metric {
+    fn clone(&self) -> devstat_metric {
+        *self
     }
+}
 
-    #[repr(u32)]
-    pub enum devstat_select_mode {
-        pub DS_SELECT_ADD,
-        pub DS_SELECT_ONLY,
-        pub DS_SELECT_REMOVE,
-        pub DS_SELECT_ADDONLY,
+#[derive(Debug)]
+#[cfg_attr(feature = "extra_traits", derive(Hash, PartialEq, Eq))]
+#[repr(u32)]
+pub enum devstat_select_mode {
+    DS_SELECT_ADD,
+    DS_SELECT_ONLY,
+    DS_SELECT_REMOVE,
+    DS_SELECT_ADDONLY,
+}
+impl Copy for devstat_select_mode {}
+impl Clone for devstat_select_mode {
+    fn clone(&self) -> devstat_select_mode {
+        *self
     }
 }
 
 s! {
-    // FIXME(1.0): This should not implement `PartialEq`
-    #[allow(unpredictable_function_pointer_comparisons)]
-    pub struct __c_anonymous_sigev_thread {
-        pub _function: Option<extern "C" fn(crate::sigval) -> *mut c_void>,
-        //pub _function: *mut c_void, // Actually a function pointer
-        pub _attribute: *mut crate::pthread_attr_t,
+    pub struct aiocb {
+        pub aio_fildes: c_int,
+        pub aio_offset: off_t,
+        pub aio_buf: *mut c_void,
+        pub aio_nbytes: size_t,
+        __unused1: [c_int; 2],
+        __unused2: *mut c_void,
+        pub aio_lio_opcode: c_int,
+        pub aio_reqprio: c_int,
+        // unused 3 through 5 are the __aiocb_private structure
+        __unused3: c_long,
+        __unused4: c_long,
+        __unused5: *mut c_void,
+        pub aio_sigevent: sigevent,
     }
 
     pub struct jail {
@@ -417,7 +488,7 @@ s! {
         _kve_is_spare: [c_int; 8],
         #[cfg(freebsd11)]
         _kve_is_spare: [c_int; 12],
-        pub kve_path: [c_char; crate::PATH_MAX as usize],
+        pub kve_path: [[c_char; 32]; 32],
     }
 
     pub struct __c_anonymous_filestat {
@@ -1001,49 +1072,41 @@ s! {
         pub tcpi_snd_rexmitpack: u32,
         pub tcpi_rcv_ooopack: u32,
         pub tcpi_snd_zerowin: u32,
-        #[cfg(freebsd13)]
-        pub __tcpi_delivered_ce: u32,
         #[cfg(any(freebsd15, freebsd14))]
         pub tcpi_delivered_ce: u32,
-        #[cfg(freebsd13)]
-        pub __tcpi_received_ce: u32,
         #[cfg(any(freebsd15, freebsd14))]
         pub tcpi_received_ce: u32,
-        #[cfg(any(freebsd15, freebsd14, freebsd13))]
+        #[cfg(any(freebsd15, freebsd14))]
         pub __tcpi_delivered_e1_bytes: u32,
-        #[cfg(any(freebsd15, freebsd14, freebsd13))]
+        #[cfg(any(freebsd15, freebsd14))]
         pub __tcpi_delivered_e0_bytes: u32,
-        #[cfg(any(freebsd15, freebsd14, freebsd13))]
+        #[cfg(any(freebsd15, freebsd14))]
         pub __tcpi_delivered_ce_bytes: u32,
-        #[cfg(any(freebsd15, freebsd14, freebsd13))]
+        #[cfg(any(freebsd15, freebsd14))]
         pub __tcpi_received_e1_bytes: u32,
-        #[cfg(any(freebsd15, freebsd14, freebsd13))]
+        #[cfg(any(freebsd15, freebsd14))]
         pub __tcpi_received_e0_bytes: u32,
-        #[cfg(any(freebsd15, freebsd14, freebsd13))]
+        #[cfg(any(freebsd15, freebsd14))]
         pub __tcpi_received_ce_bytes: u32,
-        #[cfg(freebsd13)]
-        pub __tcpi_total_tlp: u32,
         #[cfg(any(freebsd15, freebsd14))]
         pub tcpi_total_tlp: u32,
-        #[cfg(freebsd13)]
-        pub __tcpi_total_tlp_bytes: u64,
         #[cfg(any(freebsd15, freebsd14))]
         pub tcpi_total_tlp_bytes: u64,
-        #[cfg(any(freebsd15, freebsd14, freebsd13))]
+        #[cfg(any(freebsd15, freebsd14))]
         pub tcpi_snd_una: u32,
-        #[cfg(any(freebsd15, freebsd14, freebsd13))]
+        #[cfg(any(freebsd15, freebsd14))]
         pub tcpi_snd_max: u32,
-        #[cfg(any(freebsd15, freebsd14, freebsd13))]
+        #[cfg(any(freebsd15, freebsd14))]
         pub tcpi_rcv_numsacks: u32,
-        #[cfg(any(freebsd15, freebsd14, freebsd13))]
+        #[cfg(any(freebsd15, freebsd14))]
         pub tcpi_rcv_adv: u32,
-        #[cfg(any(freebsd15, freebsd14, freebsd13))]
+        #[cfg(any(freebsd15, freebsd14))]
         pub tcpi_dupacks: u32,
-        #[cfg(any(freebsd14, freebsd13))]
+        #[cfg(freebsd14)]
         pub __tcpi_pad: [u32; 10],
         #[cfg(freebsd15)]
         pub __tcpi_pad: [u32; 14],
-        #[cfg(not(any(freebsd15, freebsd14, freebsd13)))]
+        #[cfg(not(any(freebsd15, freebsd14)))]
         pub __tcpi_pad: [u32; 26],
     }
 
@@ -1112,7 +1175,7 @@ s! {
         pub sinfo_assoc_id: crate::sctp_assoc_t,
         pub sinfo_keynumber: u16,
         pub sinfo_keynumber_valid: u16,
-        pub __reserve_pad: [u8; SCTP_ALIGN_RESV_PAD],
+        pub __reserve_pad: [[u8; 23]; 4],
     }
 
     pub struct sctp_extrcvinfo {
@@ -1132,7 +1195,7 @@ s! {
         pub serinfo_next_ppid: u32,
         pub sinfo_keynumber: u16,
         pub sinfo_keynumber_valid: u16,
-        pub __reserve_pad: [u8; SCTP_ALIGN_RESV_PAD_SHORT],
+        pub __reserve_pad: [[u8; 19]; 4],
     }
 
     pub struct sctp_sndinfo {
@@ -1412,6 +1475,7 @@ s! {
         pub ifr_name: [c_char; crate::IFNAMSIZ],
         pub ifr_ifru: __c_anonymous_ifr_ifru,
     }
+
     pub struct if_data {
         /// ethernet, tokenring, etc
         pub ifi_type: u8,
@@ -1589,32 +1653,6 @@ s! {
 }
 
 s_no_extra_traits! {
-    pub struct __aiocb_private {
-        status: c_long,
-        error: c_long,
-        spare: *mut c_void,
-    }
-
-    pub struct aiocb {
-        pub aio_fildes: c_int,
-        pub aio_offset: off_t,
-        pub aio_buf: *mut c_void,
-        pub aio_nbytes: size_t,
-        __spare__: [c_int; 2],
-        __spare2__: *mut c_void,
-        pub aio_lio_opcode: c_int,
-        pub aio_reqprio: c_int,
-        _aiocb_private: __aiocb_private,
-        pub aio_sigevent: sigevent,
-    }
-
-    pub union __c_anonymous_sigev_un {
-        pub _threadid: crate::__lwpid_t,
-        pub _sigev_thread: __c_anonymous_sigev_thread,
-        pub _kevent_flags: c_ushort,
-        __spare__: [c_long; 8],
-    }
-
     pub union __c_anonymous_cr_pid {
         __cr_unused: Padding<*mut c_void>,
         pub cr_pid: crate::pid_t,
@@ -1624,7 +1662,12 @@ s_no_extra_traits! {
         pub sigev_notify: c_int,
         pub sigev_signo: c_int,
         pub sigev_value: crate::sigval,
-        pub _sigev_un: __c_anonymous_sigev_un,
+        //The rest of the structure is actually a union.  We expose only
+        //sigev_notify_thread_id because it's the most useful union member.
+        pub sigev_notify_thread_id: crate::lwpid_t,
+        #[cfg(target_pointer_width = "64")]
+        __unused1: c_int,
+        __unused2: [c_long; 7],
     }
 
     pub union __c_anonymous_elf32_auxv_union {
@@ -1757,6 +1800,24 @@ cfg_if! {
             }
         }
 
+        impl PartialEq for sigevent {
+            fn eq(&self, other: &sigevent) -> bool {
+                self.sigev_notify == other.sigev_notify
+                    && self.sigev_signo == other.sigev_signo
+                    && self.sigev_value == other.sigev_value
+                    && self.sigev_notify_thread_id == other.sigev_notify_thread_id
+            }
+        }
+        impl Eq for sigevent {}
+        impl hash::Hash for sigevent {
+            fn hash<H: hash::Hasher>(&self, state: &mut H) {
+                self.sigev_notify.hash(state);
+                self.sigev_signo.hash(state);
+                self.sigev_value.hash(state);
+                self.sigev_notify_thread_id.hash(state);
+            }
+        }
+
         impl PartialEq for __c_anonymous_elf32_auxv_union {
             fn eq(&self, other: &__c_anonymous_elf32_auxv_union) -> bool {
                 unsafe { self.a_val == other.a_val }
@@ -1856,15 +1917,20 @@ cfg_if! {
     }
 }
 
-c_enum! {
-    #[repr(u32)]
-    pub enum dot3Vendors {
-        pub dot3VendorAMD = 1,
-        pub dot3VendorIntel = 2,
-        pub dot3VendorNational = 4,
-        pub dot3VendorFujitsu = 5,
-        pub dot3VendorDigital = 6,
-        pub dot3VendorWesternDigital = 7,
+#[derive(Debug)]
+#[repr(u32)]
+pub enum dot3Vendors {
+    dot3VendorAMD = 1,
+    dot3VendorIntel = 2,
+    dot3VendorNational = 4,
+    dot3VendorFujitsu = 5,
+    dot3VendorDigital = 6,
+    dot3VendorWesternDigital = 7,
+}
+impl Copy for dot3Vendors {}
+impl Clone for dot3Vendors {
+    fn clone(&self) -> dot3Vendors {
+        *self
     }
 }
 
@@ -1963,6 +2029,12 @@ pub const CAP_SOCK_SERVER: u64 = CAP_ACCEPT
     | CAP_SEND
     | CAP_SETSOCKOPT
     | CAP_SHUTDOWN;
+#[deprecated(since = "0.2.165", note = "Not stable across OS versions")]
+pub const CAP_ALL0: u64 = cap_right!(0, 0x000007FFFFFFFFFFu64);
+#[deprecated(since = "0.2.165", note = "Not stable across OS versions")]
+pub const CAP_UNUSED0_44: u64 = cap_right!(0, 0x0000080000000000u64);
+#[deprecated(since = "0.2.165", note = "Not stable across OS versions")]
+pub const CAP_UNUSED0_57: u64 = cap_right!(0, 0x0100000000000000u64);
 pub const CAP_MAC_GET: u64 = cap_right!(1, 0x0000000000000001u64);
 pub const CAP_MAC_SET: u64 = cap_right!(1, 0x0000000000000002u64);
 pub const CAP_SEM_GETVALUE: u64 = cap_right!(1, 0x0000000000000004u64);
@@ -1985,6 +2057,12 @@ pub const CAP_ACL_GET: u64 = cap_right!(1, 0x0000000000040000u64);
 pub const CAP_ACL_SET: u64 = cap_right!(1, 0x0000000000080000u64);
 pub const CAP_KQUEUE_CHANGE: u64 = cap_right!(1, 0x0000000000100000u64);
 pub const CAP_KQUEUE: u64 = CAP_KQUEUE_EVENT | CAP_KQUEUE_CHANGE;
+#[deprecated(since = "0.2.165", note = "Not stable across OS versions")]
+pub const CAP_ALL1: u64 = cap_right!(1, 0x00000000001FFFFFu64);
+#[deprecated(since = "0.2.165", note = "Not stable across OS versions")]
+pub const CAP_UNUSED1_22: u64 = cap_right!(1, 0x0000000000200000u64);
+#[deprecated(since = "0.2.165", note = "Not stable across OS versions")]
+pub const CAP_UNUSED1_57: u64 = cap_right!(1, 0x0100000000000000u64);
 pub const CAP_FCNTL_GETFL: u32 = 1 << 3;
 pub const CAP_FCNTL_SETFL: u32 = 1 << 4;
 pub const CAP_FCNTL_GETOWN: u32 = 1 << 5;
@@ -3042,6 +3120,8 @@ pub const TCP_INFO: c_int = 32;
 pub const TCP_CONGESTION: c_int = 64;
 pub const TCP_CCALGOOPT: c_int = 65;
 pub const TCP_MAXUNACKTIME: c_int = 68;
+#[deprecated(since = "0.2.160", note = "Removed in FreeBSD 15")]
+pub const TCP_MAXPEAKRATE: c_int = 69;
 pub const TCP_IDLE_REDUCE: c_int = 70;
 pub const TCP_REMOTE_UDP_ENCAPS_PORT: c_int = 71;
 pub const TCP_DELACK: c_int = 72;
@@ -3142,6 +3222,26 @@ pub const SHM_UNLOCK: c_int = 12;
 pub const SHM_STAT: c_int = 13;
 pub const SHM_INFO: c_int = 14;
 pub const SHM_ANON: *mut c_char = 1 as *mut c_char;
+
+// The *_MAXID constants never should've been used outside of the
+// FreeBSD base system.  And with the exception of CTL_P1003_1B_MAXID,
+// they were all removed in svn r262489.  They remain here for backwards
+// compatibility only, and are scheduled to be removed in libc 1.0.0.
+#[doc(hidden)]
+#[deprecated(since = "0.2.54", note = "Removed in FreeBSD 11")]
+pub const CTL_MAXID: c_int = 10;
+#[doc(hidden)]
+#[deprecated(since = "0.2.54", note = "Removed in FreeBSD 11")]
+pub const KERN_MAXID: c_int = 38;
+#[doc(hidden)]
+#[deprecated(since = "0.2.54", note = "Removed in FreeBSD 11")]
+pub const HW_MAXID: c_int = 13;
+#[doc(hidden)]
+#[deprecated(since = "0.2.54", note = "Removed in FreeBSD 11")]
+pub const USER_MAXID: c_int = 21;
+#[doc(hidden)]
+#[deprecated(since = "0.2.74", note = "Removed in FreeBSD 13")]
+pub const CTL_P1003_1B_MAXID: c_int = 26;
 
 pub const MSG_NOTIFICATION: c_int = 0x00002000;
 pub const MSG_NBIO: c_int = 0x00004000;
@@ -4133,11 +4233,6 @@ pub const SCTP_ASSOC_RESET_FAILED: c_int = 0x0008;
 
 pub const SCTP_STREAM_CHANGE_DENIED: c_int = 0x0004;
 pub const SCTP_STREAM_CHANGE_FAILED: c_int = 0x0008;
-
-// sctp_uio.h
-
-pub const SCTP_ALIGN_RESV_PAD: usize = 92;
-pub const SCTP_ALIGN_RESV_PAD_SHORT: usize = 76;
 
 pub const KENV_DUMP_LOADER: c_int = 4;
 pub const KENV_DUMP_STATIC: c_int = 5;

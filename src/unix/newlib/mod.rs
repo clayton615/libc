@@ -327,6 +327,7 @@ s! {
     }
 }
 
+// unverified constants
 pub const PTHREAD_MUTEX_INITIALIZER: pthread_mutex_t = pthread_mutex_t {
     size: [__PTHREAD_INITIALIZER_BYTE; __SIZEOF_PTHREAD_MUTEX_T],
 };
@@ -398,11 +399,11 @@ pub const PTHREAD_MUTEX_ERRORCHECK: c_int = 2;
 
 cfg_if! {
     if #[cfg(any(target_os = "horizon", target_os = "espidf"))] {
-        pub const FD_SETSIZE: c_int = 64;
+        pub const FD_SETSIZE: usize = 64;
     } else if #[cfg(target_os = "vita")] {
-        pub const FD_SETSIZE: c_int = 256;
+        pub const FD_SETSIZE: usize = 256;
     } else {
-        pub const FD_SETSIZE: c_int = 1024;
+        pub const FD_SETSIZE: usize = 1024;
     }
 }
 // intentionally not public, only used for fd_set
@@ -879,7 +880,10 @@ extern "C" {
         flags: c_int,
     ) -> c_int;
     pub fn memalign(align: size_t, size: size_t) -> *mut c_void;
-    pub fn fexecve(fd: c_int, argv: *const *mut c_char, envp: *const *mut c_char) -> c_int;
+
+    // DIFF(main): changed to `*const *mut` in e77f551de9
+    pub fn fexecve(fd: c_int, argv: *const *const c_char, envp: *const *const c_char) -> c_int;
+
     pub fn gettimeofday(tp: *mut crate::timeval, tz: *mut c_void) -> c_int;
     pub fn getgrgid_r(
         gid: crate::gid_t,

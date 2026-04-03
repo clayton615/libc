@@ -1069,6 +1069,12 @@ pub const NET_RT_IFLIST: c_int = 3;
 pub const NET_RT_STATS: c_int = 4;
 pub const NET_RT_TABLE: c_int = 5;
 pub const NET_RT_IFNAMES: c_int = 6;
+#[doc(hidden)]
+#[deprecated(
+    since = "0.2.95",
+    note = "Possibly increasing over the releases and might not be so used in the field"
+)]
+pub const NET_RT_MAXID: c_int = 7;
 
 pub const IPV6_JOIN_GROUP: c_int = 12;
 pub const IPV6_LEAVE_GROUP: c_int = 13;
@@ -1239,7 +1245,7 @@ pub const _SC_AVPHYS_PAGES: c_int = 501;
 pub const _SC_NPROCESSORS_CONF: c_int = 502;
 pub const _SC_NPROCESSORS_ONLN: c_int = 503;
 
-pub const FD_SETSIZE: c_int = 1024;
+pub const FD_SETSIZE: usize = 1024;
 
 pub const SCHED_FIFO: c_int = 1;
 pub const SCHED_OTHER: c_int = 2;
@@ -1378,16 +1384,21 @@ pub const KERN_NTHREADS: c_int = 26;
 pub const KERN_OSVERSION: c_int = 27;
 pub const KERN_SOMAXCONN: c_int = 28;
 pub const KERN_SOMINCONN: c_int = 29;
+#[deprecated(since = "0.2.71", note = "Removed in OpenBSD 6.0")]
+pub const KERN_USERMOUNT: c_int = 30;
 pub const KERN_NOSUIDCOREDUMP: c_int = 32;
 pub const KERN_FSYNC: c_int = 33;
 pub const KERN_SYSVMSG: c_int = 34;
 pub const KERN_SYSVSEM: c_int = 35;
 pub const KERN_SYSVSHM: c_int = 36;
+#[deprecated(since = "0.2.71", note = "Removed in OpenBSD 6.0")]
+pub const KERN_ARND: c_int = 37;
 pub const KERN_MSGBUFSIZE: c_int = 38;
 pub const KERN_MALLOCSTATS: c_int = 39;
 pub const KERN_CPTIME: c_int = 40;
 pub const KERN_NCHSTATS: c_int = 41;
 pub const KERN_FORKSTAT: c_int = 42;
+pub const KERN_NSELCOLL: c_int = 43;
 pub const KERN_TTY: c_int = 44;
 pub const KERN_CCPU: c_int = 45;
 pub const KERN_FSCALE: c_int = 46;
@@ -1427,6 +1438,11 @@ pub const KERN_AUDIO: c_int = 84;
 pub const KERN_CPUSTATS: c_int = 85;
 pub const KERN_PFSTATUS: c_int = 86;
 pub const KERN_TIMEOUT_STATS: c_int = 87;
+#[deprecated(
+    since = "0.2.95",
+    note = "Possibly increasing over the releases and might not be so used in the field"
+)]
+pub const KERN_MAXID: c_int = 88;
 
 pub const KERN_PROC_ALL: c_int = 0;
 pub const KERN_PROC_PID: c_int = 1;

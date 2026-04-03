@@ -299,7 +299,7 @@ s! {
 
     pub struct accept_filter_arg {
         pub af_name: [c_char; 16],
-        af_arg: [c_char; 240],
+        af_arg: [c_char; 256 - 16],
     }
 
     pub struct ptrace_io_desc {
@@ -1188,7 +1188,7 @@ pub const SCHED_FIFO: c_int = 1;
 pub const SCHED_OTHER: c_int = 2;
 pub const SCHED_RR: c_int = 3;
 
-pub const FD_SETSIZE: c_int = 1024;
+pub const FD_SETSIZE: usize = 1024;
 
 pub const ST_NOSUID: c_ulong = 2;
 
@@ -1217,6 +1217,16 @@ pub const TIOCGETD: c_ulong = 0x4004741a;
 pub const TIOCSETD: c_ulong = 0x8004741b;
 pub const TIOCGDRAINWAIT: c_ulong = 0x40047456;
 pub const TIOCSDRAINWAIT: c_ulong = 0x80047457;
+#[cfg_attr(
+    not(target_os = "dragonfly"),
+    deprecated = "unused since FreeBSD 8, removed in FreeBSD 15"
+)]
+pub const TIOCMGDTRWAIT: c_ulong = 0x4004745a;
+#[cfg_attr(
+    not(target_os = "dragonfly"),
+    deprecated = "unused since FreeBSD 8, removed in FreeBSD 15"
+)]
+pub const TIOCMSDTRWAIT: c_ulong = 0x8004745b;
 pub const TIOCDRAIN: c_ulong = 0x2000745e;
 pub const TIOCEXT: c_ulong = 0x80047460;
 pub const TIOCSCTTY: c_ulong = 0x20007461;
@@ -1450,12 +1460,13 @@ pub const GRND_NONBLOCK: c_uint = 0x1;
 pub const GRND_RANDOM: c_uint = 0x2;
 pub const GRND_INSECURE: c_uint = 0x4;
 
-pub const POSIX_SPAWN_RESETIDS: c_short = 0x01;
-pub const POSIX_SPAWN_SETPGROUP: c_short = 0x02;
-pub const POSIX_SPAWN_SETSCHEDPARAM: c_short = 0x04;
-pub const POSIX_SPAWN_SETSCHEDULER: c_short = 0x08;
-pub const POSIX_SPAWN_SETSIGDEF: c_short = 0x10;
-pub const POSIX_SPAWN_SETSIGMASK: c_short = 0x20;
+// DIFF(main): changed to `c_short` in f62eb023ab
+pub const POSIX_SPAWN_RESETIDS: c_int = 0x01;
+pub const POSIX_SPAWN_SETPGROUP: c_int = 0x02;
+pub const POSIX_SPAWN_SETSCHEDPARAM: c_int = 0x04;
+pub const POSIX_SPAWN_SETSCHEDULER: c_int = 0x08;
+pub const POSIX_SPAWN_SETSIGDEF: c_int = 0x10;
+pub const POSIX_SPAWN_SETSIGMASK: c_int = 0x20;
 
 safe_f! {
     pub const fn WIFCONTINUED(status: c_int) -> bool {
@@ -1504,7 +1515,10 @@ extern "C" {
     pub fn duplocale(base: crate::locale_t) -> crate::locale_t;
     pub fn endutxent();
     pub fn fchflags(fd: c_int, flags: c_ulong) -> c_int;
-    pub fn fexecve(fd: c_int, argv: *const *mut c_char, envp: *const *mut c_char) -> c_int;
+
+    // DIFF(main): changed to `*const *mut` in e77f551de9
+    pub fn fexecve(fd: c_int, argv: *const *const c_char, envp: *const *const c_char) -> c_int;
+
     pub fn futimens(fd: c_int, times: *const crate::timespec) -> c_int;
     pub fn getdomainname(name: *mut c_char, len: c_int) -> c_int;
     pub fn getgrent_r(

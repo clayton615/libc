@@ -244,7 +244,7 @@ pub const F_SETFD: c_int = 2;
 pub const F_GETFL: c_int = 3;
 pub const F_SETFL: c_int = 4;
 pub const FD_CLOEXEC: c_int = 1;
-pub const FD_SETSIZE: c_int = 1024;
+pub const FD_SETSIZE: size_t = 1024;
 pub const O_APPEND: c_int = 0x0001;
 pub const O_DSYNC: c_int = 0x0002;
 pub const O_NONBLOCK: c_int = 0x0004;
@@ -544,7 +544,7 @@ pub const _SC_THREAD_ROBUST_PRIO_PROTECT: c_int = 248;
 pub const _SC_MINSIGSTKSZ: c_int = 249;
 pub const _SC_SIGSTKSZ: c_int = 250;
 
-// unsafe code here is required in the stable, but not in nightly
+// FIXME(msrv): `addr_of!(EXTERN_STATIC)` is now safe; remove `unsafe` when MSRV >= 1.82
 #[allow(unused_unsafe)]
 pub static CLOCK_MONOTONIC: clockid_t = unsafe { clockid_t(core::ptr::addr_of!(_CLOCK_MONOTONIC)) };
 #[allow(unused_unsafe)]

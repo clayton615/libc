@@ -260,6 +260,28 @@ macro_rules! extern_ty {
     )*);
 }
 
+/// Implement `Clone` and `Copy` for an enum, as well as `Debug`, `Eq`, `Hash`, and
+/// `PartialEq` if the `extra_traits` feature is enabled.
+// FIXME(#4419): Replace all uses of `e!` with `c_enum!`
+macro_rules! e {
+    ($(
+        $(#[$attr:meta])*
+        pub enum $i:ident { $($field:tt)* }
+    )*) => ($(
+        #[cfg_attr(
+            feature = "extra_traits",
+            ::core::prelude::v1::derive(Eq, Hash, PartialEq)
+        )]
+        #[::core::prelude::v1::derive(
+            ::core::clone::Clone,
+            ::core::marker::Copy,
+            ::core::fmt::Debug,
+        )]
+        $(#[$attr])*
+        pub enum $i { $($field)* }
+    )*);
+}
+
 /// Represent a C enum as Rust constants and a type.
 ///
 /// C enums can't soundly be mapped to Rust enums since C enums are allowed to have duplicates or
@@ -381,6 +403,40 @@ macro_rules! safe_f {
         ($($arg: $argty),*) -> $ret
             $body
     )+};
+}
+
+// This macro is used to deprecate items that should be accessed via the mach2 crate
+macro_rules! deprecated_mach {
+    (pub const $id:ident: $ty:ty = $expr:expr;) => {
+        #[deprecated(
+            since = "0.2.55",
+            note = "Use the `mach2` crate instead",
+        )]
+        #[allow(deprecated)]
+        pub const $id: $ty = $expr;
+    };
+    ($(pub const $id:ident: $ty:ty = $expr:expr;)*) => {
+        $(
+            deprecated_mach!(
+                pub const $id: $ty = $expr;
+            );
+        )*
+    };
+    (pub type $id:ident = $ty:ty;) => {
+        #[deprecated(
+            since = "0.2.55",
+            note = "Use the `mach2` crate instead",
+        )]
+        #[allow(deprecated)]
+        pub type $id = $ty;
+    };
+    ($(pub type $id:ident = $ty:ty;)*) => {
+        $(
+            deprecated_mach!(
+                pub type $id = $ty;
+            );
+        )*
+    }
 }
 
 /// Polyfill for std's `offset_of`.

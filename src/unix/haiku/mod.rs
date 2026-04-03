@@ -918,7 +918,8 @@ pub const SA_ONESHOT: c_int = SA_RESETHAND;
 pub const SS_ONSTACK: c_int = 0x1;
 pub const SS_DISABLE: c_int = 0x2;
 
-pub const FD_SETSIZE: c_int = 1024;
+// DIFF(main): changed to `c_int` in 500365e1
+pub const FD_SETSIZE: usize = 1024;
 
 pub const RTLD_LOCAL: c_int = 0x0;
 pub const RTLD_NOW: c_int = 0x1;
@@ -1370,11 +1371,12 @@ pub const LOG_PERROR: c_int = 32 << 12;
 pub const LOG_NOWAIT: c_int = 64 << 12;
 
 // spawn.h
-pub const POSIX_SPAWN_RESETIDS: c_short = 0x01;
-pub const POSIX_SPAWN_SETPGROUP: c_short = 0x02;
-pub const POSIX_SPAWN_SETSIGDEF: c_short = 0x10;
-pub const POSIX_SPAWN_SETSIGMASK: c_short = 0x20;
-pub const POSIX_SPAWN_SETSID: c_short = 0x40;
+// DIFF(main): changed to `c_short` in f62eb023ab
+pub const POSIX_SPAWN_RESETIDS: c_int = 0x01;
+pub const POSIX_SPAWN_SETPGROUP: c_int = 0x02;
+pub const POSIX_SPAWN_SETSIGDEF: c_int = 0x10;
+pub const POSIX_SPAWN_SETSIGMASK: c_int = 0x20;
+pub const POSIX_SPAWN_SETSID: c_int = 0x40;
 
 const fn CMSG_ALIGN(len: usize) -> usize {
     len + size_of::<usize>() - 1 & !(size_of::<usize>() - 1)
@@ -1663,11 +1665,14 @@ extern "C" {
 
     pub fn sendmsg(fd: c_int, msg: *const crate::msghdr, flags: c_int) -> ssize_t;
     pub fn recvmsg(fd: c_int, msg: *mut crate::msghdr, flags: c_int) -> ssize_t;
+
+    // DIFF(main): changed to `*const *mut` in e77f551de9
     pub fn execvpe(
         file: *const c_char,
-        argv: *const *mut c_char,
-        environment: *const *mut c_char,
+        argv: *const *const c_char,
+        environment: *const *const c_char,
     ) -> c_int;
+
     pub fn getgrgid_r(
         gid: crate::gid_t,
         grp: *mut crate::group,

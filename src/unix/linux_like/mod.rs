@@ -14,13 +14,6 @@ extern_ty! {
 }
 
 s! {
-    // FIXME(1.0): This should not implement `PartialEq`
-    #[allow(unpredictable_function_pointer_comparisons)]
-    pub struct __c_anonymous_sigev_thread {
-        pub _function: Option<extern "C" fn(crate::sigval) -> *mut c_void>,
-        pub _attribute: *mut crate::pthread_attr_t,
-    }
-
     pub struct in_addr {
         pub s_addr: crate::in_addr_t,
     }
@@ -161,7 +154,7 @@ s! {
         pub ifa_flags: c_uint,
         pub ifa_addr: *mut crate::sockaddr,
         pub ifa_netmask: *mut crate::sockaddr,
-        pub ifa_ifu: __c_anonymous_ifaddrs_ifa_ifu,
+        pub ifa_ifu: *mut crate::sockaddr, // FIXME(union) This should be a union
         pub ifa_data: *mut c_void,
     }
 
@@ -236,24 +229,6 @@ s! {
 }
 
 cfg_if! {
-    if #[cfg(all(
-        any(target_arch = "x86_64", target_arch = "s390x"),
-        not(any(target_env = "musl", target_os = "android"))
-    ))] {
-        s! {
-            pub struct sockaddr_iucv {
-                pub siucv_family: crate::sa_family_t,
-                pub siucv_port: crate::in_port_t,
-                pub siucv_addr: crate::in_addr_t,
-                pub siucv_nodeid: [c_char; 8],
-                pub siucv_user_id: [c_char; 8],
-                pub siucv_name: [c_char; 8],
-            }
-        }
-    }
-}
-
-cfg_if! {
     if #[cfg(not(any(target_os = "emscripten", target_os = "l4re")))] {
         s! {
             pub struct file_clone_range {
@@ -323,89 +298,61 @@ cfg_if! {
 }
 
 s_no_extra_traits! {
-    pub union __c_anonymous_sigev_un {
-        _pad: Padding<[c_int; SIGEV_PAD_SIZE]>,
-        pub _tid: c_int,
-        pub _sigev_thread: __c_anonymous_sigev_thread,
+    #[cfg_attr(
+        any(target_arch = "x86_64", all(target_arch = "x86", target_env = "gnu")),
+        repr(packed)
+    )]
+    pub struct epoll_event {
+        pub events: u32,
+        pub u64: u64,
     }
 
     pub struct sigevent {
         pub sigev_value: crate::sigval,
         pub sigev_signo: c_int,
         pub sigev_notify: c_int,
-        pub _sigev_un: __c_anonymous_sigev_un,
-    }
-
-    pub union __c_anonymous_ifaddrs_ifa_ifu {
-        ifu_broadaddr: *mut sockaddr,
-        ifu_dstaddr: *mut sockaddr,
-    }
-}
-
-cfg_if! {
-    if #[cfg(not(target_os = "l4re"))] {
-        s_no_extra_traits! {
-            #[cfg_attr(
-                any(target_arch = "x86_64", all(target_arch = "x86", target_env = "gnu")),
-                repr(packed)
-            )]
-            pub struct epoll_event {
-                pub events: u32,
-                pub data: epoll_data,
-            }
-
-            pub union epoll_data {
-                pub ptr: *mut c_void,
-                pub fd: c_int,
-                pub u32: u32,
-                pub u64: u64,
-            }
-        }
-    }
-}
-
-cfg_if! {
-    if #[cfg(feature = "extra_traits")] {
-        impl PartialEq for __c_anonymous_ifaddrs_ifa_ifu {
-            fn eq(&self, _other: &__c_anonymous_ifaddrs_ifa_ifu) -> bool {
-                unimplemented!("traits")
-            }
-        }
-        impl Eq for __c_anonymous_ifaddrs_ifa_ifu {}
-        impl hash::Hash for __c_anonymous_ifaddrs_ifa_ifu {
-            fn hash<H: hash::Hasher>(&self, _state: &mut H) {
-                unimplemented!("traits")
-            }
-        }
+        // Actually a union.  We only expose sigev_notify_thread_id because it's
+        // the most useful member
+        pub sigev_notify_thread_id: c_int,
+        #[cfg(target_pointer_width = "64")]
+        __unused1: Padding<[c_int; 11]>,
+        #[cfg(target_pointer_width = "32")]
+        __unused1: Padding<[c_int; 12]>,
     }
 }
 
 cfg_if! {
     if #[cfg(all(feature = "extra_traits", not(target_os = "l4re")))] {
         impl PartialEq for epoll_event {
-            fn eq(&self, _other: &epoll_event) -> bool {
-                unimplemented!("traits")
+            fn eq(&self, other: &epoll_event) -> bool {
+                self.events == other.events && self.u64 == other.u64
             }
         }
         impl Eq for epoll_event {}
         impl hash::Hash for epoll_event {
             fn hash<H: hash::Hasher>(&self, state: &mut H) {
                 let events = self.events;
-                let data = self.data;
+                let u64 = self.u64;
                 events.hash(state);
-                data.hash(state);
+                u64.hash(state);
             }
         }
 
-        impl PartialEq for epoll_data {
-            fn eq(&self, _other: &epoll_data) -> bool {
-                unimplemented!("traits")
+        impl PartialEq for sigevent {
+            fn eq(&self, other: &sigevent) -> bool {
+                self.sigev_value == other.sigev_value
+                    && self.sigev_signo == other.sigev_signo
+                    && self.sigev_notify == other.sigev_notify
+                    && self.sigev_notify_thread_id == other.sigev_notify_thread_id
             }
         }
-        impl Eq for epoll_data {}
-        impl hash::Hash for epoll_data {
-            fn hash<H: hash::Hasher>(&self, _state: &mut H) {
-                unimplemented!("traits")
+        impl Eq for sigevent {}
+        impl hash::Hash for sigevent {
+            fn hash<H: hash::Hasher>(&self, state: &mut H) {
+                self.sigev_value.hash(state);
+                self.sigev_signo.hash(state);
+                self.sigev_notify.hash(state);
+                self.sigev_notify_thread_id.hash(state);
             }
         }
     }
@@ -518,16 +465,6 @@ pub const SIGSEGV: c_int = 11;
 pub const SIGPIPE: c_int = 13;
 pub const SIGALRM: c_int = 14;
 pub const SIGTERM: c_int = 15;
-
-const SIGEV_MAX_SIZE: usize = 64;
-cfg_if! {
-    if #[cfg(target_pointer_width = "64")] {
-        const __ARCH_SIGEV_PREAMBLE_SIZE: usize = 4 * 2 + 8;
-    } else {
-        const __ARCH_SIGEV_PREAMBLE_SIZE: usize = 4 * 2 + 4;
-    }
-}
-const SIGEV_PAD_SIZE: usize = (SIGEV_MAX_SIZE - __ARCH_SIGEV_PREAMBLE_SIZE) / 4;
 
 pub const PROT_NONE: c_int = 0;
 pub const PROT_READ: c_int = 1;
@@ -1069,23 +1006,23 @@ pub const PATH_MAX: c_int = 4096;
 
 pub const UIO_MAXIOV: c_int = 1024;
 
-pub const FD_SETSIZE: c_int = 1024;
+pub const FD_SETSIZE: usize = 1024;
 
-pub const EPOLLIN: u32 = 0x1;
-pub const EPOLLPRI: u32 = 0x2;
-pub const EPOLLOUT: u32 = 0x4;
-pub const EPOLLERR: u32 = 0x8;
-pub const EPOLLHUP: u32 = 0x10;
-pub const EPOLLRDNORM: u32 = 0x40;
-pub const EPOLLRDBAND: u32 = 0x80;
-pub const EPOLLWRNORM: u32 = 0x100;
-pub const EPOLLWRBAND: u32 = 0x200;
-pub const EPOLLMSG: u32 = 0x400;
-pub const EPOLLRDHUP: u32 = 0x2000;
-pub const EPOLLEXCLUSIVE: u32 = 0x10000000;
-pub const EPOLLWAKEUP: u32 = 0x20000000;
-pub const EPOLLONESHOT: u32 = 0x40000000;
-pub const EPOLLET: u32 = 0x80000000;
+pub const EPOLLIN: c_int = 0x1;
+pub const EPOLLPRI: c_int = 0x2;
+pub const EPOLLOUT: c_int = 0x4;
+pub const EPOLLERR: c_int = 0x8;
+pub const EPOLLHUP: c_int = 0x10;
+pub const EPOLLRDNORM: c_int = 0x40;
+pub const EPOLLRDBAND: c_int = 0x80;
+pub const EPOLLWRNORM: c_int = 0x100;
+pub const EPOLLWRBAND: c_int = 0x200;
+pub const EPOLLMSG: c_int = 0x400;
+pub const EPOLLRDHUP: c_int = 0x2000;
+pub const EPOLLEXCLUSIVE: c_int = 0x10000000;
+pub const EPOLLWAKEUP: c_int = 0x20000000;
+pub const EPOLLONESHOT: c_int = 0x40000000;
+pub const EPOLLET: c_int = 0x80000000;
 
 pub const EPOLL_CTL_ADD: c_int = 1;
 pub const EPOLL_CTL_MOD: c_int = 3;
@@ -1160,14 +1097,10 @@ pub const ONLRET: crate::tcflag_t = 0o000040;
 pub const OFILL: crate::tcflag_t = 0o000100;
 pub const OFDEL: crate::tcflag_t = 0o000200;
 
-#[cfg(not(target_os = "l4re"))]
-pub const CLONE_NEWTIME: c_int = 0x80;
 pub const CLONE_VM: c_int = 0x100;
 pub const CLONE_FS: c_int = 0x200;
 pub const CLONE_FILES: c_int = 0x400;
 pub const CLONE_SIGHAND: c_int = 0x800;
-#[cfg(not(target_os = "l4re"))]
-pub const CLONE_PIDFD: c_int = 0x1000;
 pub const CLONE_PTRACE: c_int = 0x2000;
 pub const CLONE_VFORK: c_int = 0x4000;
 pub const CLONE_PARENT: c_int = 0x8000;
@@ -2021,6 +1954,11 @@ extern "C" {
     pub fn brk(addr: *mut c_void) -> c_int;
     #[cfg(not(target_os = "l4re"))]
     pub fn sbrk(increment: intptr_t) -> *mut c_void;
+    #[deprecated(
+        since = "0.2.66",
+        note = "causes memory corruption, see rust-lang/libc#1596"
+    )]
+    pub fn vfork() -> crate::pid_t;
     #[cfg(not(target_os = "l4re"))]
     pub fn setresgid(rgid: crate::gid_t, egid: crate::gid_t, sgid: crate::gid_t) -> c_int;
     #[cfg(not(target_os = "l4re"))]
@@ -2035,14 +1973,16 @@ extern "C" {
     ) -> crate::pid_t;
     #[cfg(not(target_os = "l4re"))]
     pub fn login_tty(fd: c_int) -> c_int;
+
+    // DIFF(main): changed to `*const *mut` in e77f551de9
     #[cfg(not(target_os = "l4re"))]
     pub fn execvpe(
         file: *const c_char,
-        argv: *const *mut c_char,
-        envp: *const *mut c_char,
+        argv: *const *const c_char,
+        envp: *const *const c_char,
     ) -> c_int;
     #[cfg(not(target_os = "l4re"))]
-    pub fn fexecve(fd: c_int, argv: *const *mut c_char, envp: *const *mut c_char) -> c_int;
+    pub fn fexecve(fd: c_int, argv: *const *const c_char, envp: *const *const c_char) -> c_int;
     #[cfg(not(target_os = "l4re"))]
     pub fn getifaddrs(ifap: *mut *mut crate::ifaddrs) -> c_int;
     #[cfg(not(target_os = "l4re"))]

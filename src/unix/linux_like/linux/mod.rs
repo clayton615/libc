@@ -37,13 +37,16 @@ pub type sctp_assoc_t = __s32;
 
 pub type eventfd_t = u64;
 
-c_enum! {
+e! {
+    #[repr(u32)]
     pub enum tpacket_versions {
-        pub TPACKET_V1,
-        pub TPACKET_V2,
-        pub TPACKET_V3,
+        TPACKET_V1,
+        TPACKET_V2,
+        TPACKET_V3,
     }
+}
 
+c_enum! {
     pub enum pid_type {
         pub PIDTYPE_PID,
         pub PIDTYPE_TGID,
@@ -224,22 +227,21 @@ s! {
     }
 
     pub struct input_event {
-        // input_event_sec and input_event_usec are preprocessor macros in C.
-        // On all variants _except_ 32-bit long and 64-bit time_t they actually
-        // refer to members of input_event.time, a timeval struct.
-        // The timeval struct has two members of type time_t and suseconds_t.
+        // FIXME(1.0): Change to the commented variant, see https://github.com/rust-lang/libc/pull/4148#discussion_r1857511742
         #[cfg(any(target_pointer_width = "64", not(linux_time_bits64)))]
-        pub input_event_sec: crate::time_t,
+        pub time: crate::timeval,
+        // #[cfg(any(target_pointer_width = "64", not(linux_time_bits64)))]
+        // pub input_event_sec: time_t,
+        // #[cfg(any(target_pointer_width = "64", not(linux_time_bits64)))]
+        // pub input_event_usec: suseconds_t,
+        // #[cfg(target_arch = "sparc64")]
+        // _pad1: c_int,
         #[cfg(all(target_pointer_width = "32", linux_time_bits64))]
         pub input_event_sec: c_ulong,
 
-        #[cfg(any(target_pointer_width = "64", not(linux_time_bits64)))]
-        pub input_event_usec: crate::suseconds_t,
         #[cfg(all(target_pointer_width = "32", linux_time_bits64))]
         pub input_event_usec: c_ulong,
 
-        #[cfg(target_arch = "sparc64")]
-        _pad1: Padding<c_int>,
         pub type_: __u16,
         pub code: __u16,
         pub value: __s32,
@@ -422,8 +424,7 @@ s! {
         pub svm_reserved1: c_ushort,
         pub svm_port: c_uint,
         pub svm_cid: c_uint,
-        pub svm_flags: u8,
-        pub svm_zero: [u8; 3],
+        pub svm_zero: [u8; 4],
     }
 
     pub struct sock_extended_err {
@@ -1291,6 +1292,13 @@ cfg_if! {
 }
 
 s_no_extra_traits! {
+    /// WARNING: The `PartialEq`, `Eq` and `Hash` implementations of this
+    /// type are unsound and will be removed in the future.
+    #[deprecated(
+        note = "this struct has unsafe trait implementations that will be \
+                removed in the future",
+        since = "0.2.80"
+    )]
     pub struct af_alg_iv {
         pub ivlen: u32,
         pub iv: [c_uchar; 0],
@@ -1385,8 +1393,36 @@ s_no_extra_traits! {
     }
 }
 
-pub const POSIX_SPAWN_USEVFORK: c_short = 64;
-pub const POSIX_SPAWN_SETSID: c_short = 128;
+cfg_if! {
+    if #[cfg(feature = "extra_traits")] {
+        #[allow(deprecated)]
+        impl af_alg_iv {
+            fn as_slice(&self) -> &[u8] {
+                unsafe { ::core::slice::from_raw_parts(self.iv.as_ptr(), self.ivlen as usize) }
+            }
+        }
+
+        #[allow(deprecated)]
+        impl PartialEq for af_alg_iv {
+            fn eq(&self, other: &af_alg_iv) -> bool {
+                *self.as_slice() == *other.as_slice()
+            }
+        }
+
+        #[allow(deprecated)]
+        impl Eq for af_alg_iv {}
+
+        #[allow(deprecated)]
+        impl hash::Hash for af_alg_iv {
+            fn hash<H: hash::Hasher>(&self, state: &mut H) {
+                self.as_slice().hash(state);
+            }
+        }
+    }
+}
+
+pub const POSIX_SPAWN_USEVFORK: c_int = 64;
+pub const POSIX_SPAWN_SETSID: c_int = 128;
 
 pub const F_SEAL_FUTURE_WRITE: c_int = 0x0010;
 pub const F_SEAL_EXEC: c_int = 0x0020;
@@ -1863,12 +1899,13 @@ pub const ETH_P_PHONET: c_int = 0x00F5;
 pub const ETH_P_IEEE802154: c_int = 0x00F6;
 pub const ETH_P_CAIF: c_int = 0x00F7;
 
-pub const POSIX_SPAWN_RESETIDS: c_short = 0x01;
-pub const POSIX_SPAWN_SETPGROUP: c_short = 0x02;
-pub const POSIX_SPAWN_SETSIGDEF: c_short = 0x04;
-pub const POSIX_SPAWN_SETSIGMASK: c_short = 0x08;
-pub const POSIX_SPAWN_SETSCHEDPARAM: c_short = 0x10;
-pub const POSIX_SPAWN_SETSCHEDULER: c_short = 0x20;
+// DIFF(main): changed to `c_short` in f62eb023ab
+pub const POSIX_SPAWN_RESETIDS: c_int = 0x01;
+pub const POSIX_SPAWN_SETPGROUP: c_int = 0x02;
+pub const POSIX_SPAWN_SETSIGDEF: c_int = 0x04;
+pub const POSIX_SPAWN_SETSIGMASK: c_int = 0x08;
+pub const POSIX_SPAWN_SETSCHEDPARAM: c_int = 0x10;
+pub const POSIX_SPAWN_SETSCHEDULER: c_int = 0x20;
 
 // linux/netfilter/nfnetlink.h
 pub const NFNLGRP_NONE: c_int = 0;
@@ -3810,8 +3847,7 @@ pub const PF_SUSPEND_TASK: c_int = PF_SUSPEND_TASK_UINT as _;
 // desired information as-is in terms of integer representation.
 const PF_SUSPEND_TASK_UINT: c_uint = 0x80000000;
 
-pub const CLONE_CLEAR_SIGHAND: c_ulonglong = 0x100000000;
-pub const CLONE_INTO_CGROUP: c_ulonglong = 0x200000000;
+pub const CLONE_PIDFD: c_int = 0x1000;
 
 pub const SCHED_FLAG_RESET_ON_FORK: c_int = 0x01;
 pub const SCHED_FLAG_RECLAIM: c_int = 0x02;

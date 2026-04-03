@@ -216,25 +216,27 @@ s! {
 }
 
 s_no_extra_traits! {
-    pub union fpreg_t {
+    // FIXME(union): This is actually a union.
+    pub struct fpreg_t {
         pub d: c_double,
-        pub f: c_float,
+        // f: c_float,
     }
 }
 
 cfg_if! {
     if #[cfg(feature = "extra_traits")] {
         impl PartialEq for fpreg_t {
-            fn eq(&self, _other: &fpreg_t) -> bool {
-                unimplemented!("traits")
+            fn eq(&self, other: &fpreg_t) -> bool {
+                self.d == other.d
             }
         }
 
         impl Eq for fpreg_t {}
 
         impl hash::Hash for fpreg_t {
-            fn hash<H: hash::Hasher>(&self, _state: &mut H) {
-                unimplemented!("traits")
+            fn hash<H: hash::Hasher>(&self, state: &mut H) {
+                let d: u64 = self.d.to_bits();
+                d.hash(state);
             }
         }
     }

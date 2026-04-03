@@ -110,6 +110,18 @@ s! {
         pub sin6_scope_id: u32,
     }
 
+    /* ------------------------------------------------------------
+     * definitions below are *unverified* and might **break** the software
+     */
+
+    //    pub struct in_addr {
+    //        pub s_addr: in_addr_t,
+    //    }
+    //
+    //    pub struct in6_addr {
+    //        pub s6_addr: [u8; 16],
+    //    }
+
     pub struct stat {
         pub st_dev: c_ulong,
         pub st_ino: crate::ino_t,

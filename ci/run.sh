@@ -29,14 +29,6 @@ case "$target" in
     *) cmd="$cmd --workspace" ;;
 esac
 
-case "$target" in
-    # crash in std::env::tmp_dir (no filesystem on wasm).
-    *wasm*) cmd="$cmd --exclude ctest --exclude ctest-test --exclude ctest-next" ;;
-    # Loongarch was fixed, but there are new instances of
-    # https://github.com/bytecodealliance/rustix/issues/1496
-    powerpc64le*musl) cmd="$cmd --exclude ctest --exclude ctest-test --exclude ctest-next" ;;
-esac
-
 env="$(rustc --print cfg --target "$target" | sed -n 's/target_env="\(.*\)"/\1/p')"
 bits="$(rustc --print cfg --target "$target" | sed -n 's/target_pointer_width="\(.*\)"/\1/p')"
 

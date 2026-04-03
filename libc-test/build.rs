@@ -237,6 +237,14 @@ fn test_apple(target: &str) {
         "libproc.h",
         "limits.h",
         "locale.h",
+        "mach-o/dyld.h",
+        "mach/mach_init.h",
+        "mach/mach.h",
+        "mach/mach_time.h",
+        "mach/mach_types.h",
+        "mach/mach_vm.h",
+        "mach/thread_act.h",
+        "mach/thread_policy.h",
         "malloc/malloc.h",
         "net/bpf.h",
         "net/dlil.h",
@@ -324,6 +332,8 @@ fn test_apple(target: &str) {
 
     cfg.skip_struct(move |s| {
         match s.ident() {
+            // FIXME(union): actually a union
+            "sigval" => true,
             // FIXME(macos): The size is changed in recent macOSes.
             "malloc_zone_t" => true,
             // it is a moving target, changing through versions
@@ -341,6 +351,8 @@ fn test_apple(target: &str) {
 
     cfg.skip_const(move |constant| {
         match constant.ident() {
+            // They're declared via `deprecated_mach` and we don't support it anymore.
+            x if x.starts_with("VM_FLAGS_") => true,
             // FIXME(deprecated): These OSX constants are removed in Sierra.
             // https://developer.apple.com/library/content/releasenotes/General/APIDiffsMacOS10_12/Swift/Darwin.html
             "KERN_KDENABLE_BG_TRACE" | "KERN_KDDISABLE_BG_TRACE" => true,
@@ -371,6 +383,8 @@ fn test_apple(target: &str) {
     cfg.skip_fn(move |func| {
         // skip those that are manually verified
         match func.ident() {
+            // FIXME: https://github.com/rust-lang/libc/issues/1272
+            "execv" | "execve" | "execvp" => true,
             // close calls the close_nocancel system call on x86
             "close" if x86_64 => true,
             // FIXME(1.0): std removed libresolv support: https://github.com/rust-lang/rust/pull/102766
@@ -381,11 +395,24 @@ fn test_apple(target: &str) {
 
     cfg.skip_struct_field(move |struct_, field| {
         match (struct_.ident(), field.ident()) {
+            // MAXPATHLEN is too big for auto-derive traits on arrays.
+            ("vnode_info_path", "vip_path") => true,
             // Anonymous ADT fields
             ("ifreq", "ifr_ifru") => true,
             ("in6_ifreq", "ifr_ifru") => true,
             ("ifkpi", "ifk_data") => true,
             ("ifconf", "ifc_ifcu") => true,
+            // FIXME: this field has been incorporated into a resized `rmx_filler` array.
+            ("rt_metrics", "rmx_state") => true,
+            ("rt_metrics", "rmx_filler") => true,
+            _ => false,
+        }
+    });
+
+    cfg.skip_struct_field_type(move |struct_, field| {
+        match (struct_.ident(), field.ident()) {
+            // FIXME(union): actually a union
+            ("sigevent", "sigev_value") => true,
             _ => false,
         }
     });
@@ -558,11 +585,48 @@ fn test_openbsd(target: &str) {
 
     cfg.skip_const(move |constant| {
         match constant.ident() {
+            // Removed in OpenBSD 6.0
+            "KERN_USERMOUNT" | "KERN_ARND" => true,
+            // Removed in OpenBSD 7.2
+            "KERN_NSELCOLL" => true,
+            // Good chance it's going to be wrong depending on the host release
+            "KERN_MAXID" | "NET_RT_MAXID" => true,
+            "EV_SYSFLAGS" => true,
+
             // Removed in OpenBSD 7.7 (unused since 1991)
             "ATF_COM" | "ATF_PERM" | "ATF_PUBL" | "ATF_USETRAILERS" => true,
 
             // Removed in OpenBSD 7.8
             "CTL_FS" | "SO_NETPROC" => true,
+
+            _ => false,
+        }
+    });
+
+    cfg.skip_fn(move |func| {
+        match func.ident() {
+            // FIXME: https://github.com/rust-lang/libc/issues/1272
+            "execv" | "execve" | "execvp" | "execvpe" => true,
+
+            // Removed in OpenBSD 6.5
+            // https://marc.info/?l=openbsd-cvs&m=154723400730318
+            "mincore" => true,
+
+            // Available for openBSD 7.3
+            "mimmutable" => true,
+
+            // Removed in OpenBSD 7.5
+            // https://marc.info/?l=openbsd-cvs&m=170239504300386
+            "syscall" => true,
+
+            _ => false,
+        }
+    });
+
+    cfg.skip_struct(move |ty| {
+        match ty.ident() {
+            // FIXME(union): actually a union
+            "sigval" => true,
 
             _ => false,
         }
@@ -660,7 +724,12 @@ fn test_cygwin(target: &str) {
         match ty {
             // Just pass all these through, no need for a "struct" prefix
             "FILE" | "DIR" | "Dl_info" | "fd_set" => Some(ty.to_string()),
+
+            // sigval is a struct in Rust, but a union in C:
+            "sigval" => Some("union sigval".to_string()),
+
             t if t.ends_with("_t") => Some(t.to_string()),
+
             _ => None,
         }
     });
@@ -859,7 +928,14 @@ fn test_windows(target: &str) {
         }
     });
 
-    cfg.skip_fn(|_| false);
+    cfg.skip_fn(move |func| {
+        match func.ident() {
+            // FIXME: https://github.com/rust-lang/libc/issues/1272
+            "execv" | "execve" | "execvp" | "execvpe" => true,
+
+            _ => false,
+        }
+    });
 
     ctest::generate_test(&mut cfg, "../src/lib.rs", "ctest_output.rs").unwrap();
 }
@@ -1044,6 +1120,8 @@ fn test_solarish(target: &str) {
 
     cfg.rename_struct_field(move |struct_, field| {
         match struct_.ident() {
+            // rust struct uses raw u64, rather than union
+            "epoll_event" if field.ident() == "u64" => Some("data.u64".to_string()),
             // rust struct was committed with typo for Solaris
             "door_arg_t" if field.ident() == "dec_num" => Some("desc_num".to_string()),
             "stat" if field.ident().ends_with("_nsec") => {
@@ -1093,6 +1171,8 @@ fn test_solarish(target: &str) {
             return true;
         }
         match struct_.ident() {
+            // union, not a struct
+            "sigval" => true,
             // a bunch of solaris-only fields
             "utmpx" if is_illumos => true,
             _ => false,
@@ -1112,6 +1192,8 @@ fn test_solarish(target: &str) {
             ("sigaction", "sa_sigaction") => true,
             // Missing in illumos
             ("sigevent", "ss_sp") => true,
+            // Avoid sigval union issues
+            ("sigevent", "sigev_value") => true,
             // const issues
             ("sigevent", "sigev_notify_attributes") => true,
 
@@ -1153,7 +1235,10 @@ fn test_solarish(target: &str) {
             "cfmakeraw" | "cfsetspeed" => true,
 
             // const-ness issues
-            "settimeofday" | "sethostname" => true,
+            "execv" | "execve" | "execvp" | "settimeofday" | "sethostname" => true,
+
+            // FIXME(1.0): https://github.com/rust-lang/libc/issues/1272
+            "fexecve" => true,
 
             // Solaris-different
             "getpwent_r" | "getgrent_r" | "updwtmpx" if is_illumos => true,
@@ -1331,6 +1416,7 @@ fn test_netbsd(target: &str) {
             s if s.ends_with("_nsec") && struct_.ident().starts_with("stat") => {
                 Some(s.replace("e_nsec", ".tv_nsec"))
             }
+            "u64" if struct_.ident() == "epoll_event" => Some("data.u64".to_string()),
             _ => None,
         }
     });
@@ -1350,6 +1436,8 @@ fn test_netbsd(target: &str) {
 
     cfg.skip_struct(move |struct_| {
         match struct_.ident() {
+            // This is actually a union, not a struct
+            "sigval" => true,
             // These are tested as part of the linux_fcntl tests since there are
             // header conflicts when including them with all the other structs.
             "termios2" => true,
@@ -1400,6 +1488,8 @@ fn test_netbsd(target: &str) {
     cfg.skip_fn(move |func| {
         #[expect(clippy::wildcard_in_or_patterns)]
         match func.ident() {
+            // FIXME(netbsd): https://github.com/rust-lang/libc/issues/1272
+            "execv" | "execve" | "execvp" => true,
             // FIXME(netbsd): Look into setting `_POSIX_C_SOURCE` to enable this
             "qsort_r" => true,
 
@@ -1424,6 +1514,8 @@ fn test_netbsd(target: &str) {
             ("ifaddrs", "ifa_ifu") => true,
             // sighandler_t type is super weird
             ("sigaction", "sa_sigaction") => true,
+            // sigval is actually a union, but we pretend it's a struct
+            ("sigevent", "sigev_value") => true,
             // aio_buf is "volatile void*" and Rust doesn't understand volatile
             ("aiocb", "aio_buf") => true,
             _ => false,
@@ -1605,6 +1697,10 @@ fn test_dragonflybsd(target: &str) {
             | "Elf32_Chdr" | "Elf64_Chdr" => Some(ty.to_string()),
 
             t if t.ends_with("_t") => Some(t.to_string()),
+
+            // sigval is a struct in Rust, but a union in C:
+            "sigval" => Some("union sigval".to_string()),
+
             _ => None,
         }
     });
@@ -1624,6 +1720,7 @@ fn test_dragonflybsd(target: &str) {
             s if s.ends_with("_nsec") && struct_.ident().starts_with("stat") => {
                 Some(s.replace("e_nsec", ".tv_nsec"))
             }
+            "u64" if struct_.ident() == "epoll_event" => Some("data.u64".to_string()),
             // Field is named `type` in C but that is a Rust keyword,
             // so these fields are translated to `type_` in the bindings.
             "type_" if struct_.ident() == "rtprio" => Some("type".to_string()),
@@ -1683,6 +1780,8 @@ fn test_dragonflybsd(target: &str) {
     cfg.skip_fn(move |func| {
         // skip those that are manually verified
         match func.ident() {
+            // FIXME: https://github.com/rust-lang/libc/issues/1272
+            "execv" | "execve" | "execvp" | "fexecve" => true,
             "getrlimit" | "getrlimit64" |    // non-int in 1st arg
             "setrlimit" | "setrlimit64" |    // non-int in 1st arg
             "prlimit" | "prlimit64"        // non-int in 2nd arg
@@ -1698,6 +1797,8 @@ fn test_dragonflybsd(target: &str) {
             ("ifaddrs", "ifa_ifu") => true,
             // sighandler_t type is super weird
             ("sigaction", "sa_sigaction") => true,
+            // sigval is actually a union, but we pretend it's a struct
+            ("sigevent", "sigev_value") => true,
             // aio_buf is "volatile void*" and Rust doesn't understand volatile
             ("aiocb", "aio_buf") => true,
             _ => false,
@@ -1978,6 +2079,8 @@ fn test_android(target: &str) {
     cfg.rename_struct_ty(|ty| match ty {
         // Just pass all these through, no need for a "struct" prefix
         "FILE" | "fd_set" | "Dl_info" | "Elf32_Phdr" | "Elf64_Phdr" => Some(ty.to_string()),
+        // sigval is a struct in Rust, but a union in C:
+        "sigval" => Some("union sigval".to_string()),
         t if t.ends_with("_t") => Some(t.to_string()),
         _ => None,
     });
@@ -1991,6 +2094,8 @@ fn test_android(target: &str) {
             {
                 Some(f.to_string())
             }
+            // FIXME(union): appears that `epoll_event.data` is an union
+            ("epoll_event", "u64") => Some("data.u64".to_string()),
             // The following structs have a field called `type` in C,
             // but `type` is a Rust keyword, so these fields are translated
             // to `type_` in Rust.
@@ -2180,6 +2285,9 @@ fn test_android(target: &str) {
     cfg.skip_fn(move |func| {
         // skip those that are manually verified
         match func.ident() {
+            // FIXME(android): https://github.com/rust-lang/libc/issues/1272
+            "execv" | "execve" | "execvp" | "execvpe" => true,
+
             // FIXME(android): for unknown reasons linker unable to find "fexecve"
             "fexecve" => true,
 
@@ -2254,6 +2362,8 @@ fn test_android(target: &str) {
         match (struct_.ident(), field.ident()) {
             // This is a weird union, don't check the type.
             ("ifaddrs", "ifa_ifu") => true,
+            // sigval is actually a union, but we pretend it's a struct
+            ("sigevent", "sigev_value") => true,
             // this one is an anonymous union
             ("ff_effect", "u") => true,
             // FIXME(android): `sa_sigaction` has type `sighandler_t` but that type is
@@ -2272,9 +2382,6 @@ fn test_android(target: &str) {
             // conflicting with `p_type` macro from <resolve.h>.
             ("Elf32_Phdr", "p_type") => true,
             ("Elf64_Phdr", "p_type") => true,
-
-            // _sigev_un is an anonymous union
-            ("sigevent", "_sigev_un") => true,
 
             // this is actually a union on linux, so we can't represent it well and
             // just insert some padding.
@@ -2473,7 +2580,11 @@ fn test_freebsd(target: &str) {
             | "devstat_match_flags"
             | "devstat_priority" => Some(ty.to_string()),
 
+            // sigval is a struct in Rust, but a union in C:
+            "sigval" => Some("union sigval".to_string()),
+
             t if t.ends_with("_t") => Some(t.to_string()),
+
             _ => None,
         }
     });
@@ -2533,7 +2644,16 @@ fn test_freebsd(target: &str) {
             // still be accepted and ignored at runtime.
             "MAP_RENAME" | "MAP_NORESERVE" => true,
 
-            // FIXME(deprecated): This is deprecated - remove in a couple of releases.
+            // FIXME(deprecated): These are deprecated - remove in a couple of releases.
+            // These constants were removed in FreeBSD 11 (svn r262489),
+            // and they've never had any legitimate use outside of the
+            // base system anyway.
+            "CTL_MAXID" | "KERN_MAXID" | "HW_MAXID" | "USER_MAXID" => true,
+
+            // Deprecated and removed in FreeBSD 15.  It was never actually implemented.
+            "TCP_MAXPEAKRATE" => true,
+
+            // FIXME: This is deprecated - remove in a couple of releases.
             // This was removed in FreeBSD 14 (git 1b4701fe1e8) and never
             // should've been used anywhere anyway.
             "TDF_UNUSED23" => true,
@@ -2748,7 +2868,7 @@ fn test_freebsd(target: &str) {
             }
 
             // FIXME(freebsd): Removed in FreeBSD 15:
-            "LOCAL_CONNWAIT" => true,
+            "LOCAL_CONNWAIT" if freebsd_ver >= Some(15) => true,
 
             // FIXME(freebsd): The values has been changed in FreeBSD 15:
             "CLOCK_BOOTTIME" if Some(15) <= freebsd_ver => true,
@@ -2756,11 +2876,19 @@ fn test_freebsd(target: &str) {
             // Added in FreeBSD 14.0
             "TCP_FUNCTION_ALIAS" if Some(14) > freebsd_ver => true,
 
+            // These constants may change or disappear in future OS releases, and they probably
+            // have no legitimate use in applications anyway.
+            "CAP_UNUSED0_44" | "CAP_UNUSED0_57" | "CAP_UNUSED1_22" | "CAP_UNUSED1_57"
+            | "CAP_ALL0" | "CAP_ALL1" => true,
+
             // FIXME(freebsd): Removed in FreeBSD 15, deprecated in libc
             "TCP_PCAP_OUT" | "TCP_PCAP_IN" => true,
 
             // Added in FreeBSD 14.2
             "SO_SPLICE" if Some(14) > freebsd_ver => true,
+
+            // FIXME(deprecated): deprecated in 0.2, removed in main
+            "TIOCMGDTRWAIT" | "TIOCMSDTRWAIT" => true,
 
             // Added in FreeBSD 15
             "AT_HWCAP3" | "AT_HWCAP4" if Some(15) > freebsd_ver => true,
@@ -2829,8 +2957,9 @@ fn test_freebsd(target: &str) {
     cfg.skip_fn(move |func| {
         // skip those that are manually verified
         match func.ident() {
-            // This is introduced in FreeBSD 14.1
-            "execvpe" => true,
+            // FIXME: https://github.com/rust-lang/libc/issues/1272
+            // Also, `execvpe` is introduced in FreeBSD 14.1
+            "execv" | "execve" | "execvp" | "execvpe" | "fexecve" => true,
 
             // The `uname` function in the `utsname.h` FreeBSD header is a C
             // inline function (has no symbol) that calls the `__xuname` symbol.
@@ -2905,13 +3034,12 @@ fn test_freebsd(target: &str) {
             // not available until FreeBSD 12, and is an anonymous union there.
             ("xucred", "cr_pid__c_anonymous_union") => true,
 
-            // Anonymous union
-            ("sigevent", "_sigev_un") => true,
-
             // m_owner field is a volatile __lwpid_t
             ("umutex", "m_owner") => true,
             // c_has_waiters field is a volatile int32_t
             ("ucond", "c_has_waiters") => true,
+            // is PATH_MAX long but tests can't accept multi array as equivalent.
+            ("kinfo_vmentry", "kve_path") => true,
 
             // a_un field is a union
             ("Elf32_Auxinfo", "a_un") => true,
@@ -2940,6 +3068,10 @@ fn test_freebsd(target: &str) {
             // Anonymous type.
             ("filestat", "next") => true,
 
+            // We ignore this field because we needed to use a hack in order to make rust 1.19
+            // happy...
+            ("kinfo_proc", "ki_sparestrings") => true,
+
             // `__sem_base` is a private struct field
             ("semid_ds", "__sem_base") => true,
 
@@ -2965,7 +3097,8 @@ fn test_freebsd(target: &str) {
         });
     }
 
-    cfg.alias_is_c_enum(|ty| ty == "dot3Vendors");
+    // FIXME(ctest): The original ctest bypassed this requirement somehow.
+    cfg.rename_type(move |ty| (ty == "dot3Vendors").then_some(format!("enum {ty}")));
 
     ctest::generate_test(&mut cfg, "../src/lib.rs", "ctest_output.rs").unwrap();
 }
@@ -3075,6 +3208,8 @@ fn test_emscripten(target: &str) {
             s if s.ends_with("_nsec") && struct_.ident().starts_with("stat") => {
                 Some(s.replace("e_nsec", ".tv_nsec"))
             }
+            // Rust struct uses raw u64, rather than union
+            "u64" if struct_.ident() == "epoll_event" => Some("data.u64".to_string()),
             _ => None,
         }
     });
@@ -3093,10 +3228,6 @@ fn test_emscripten(target: &str) {
 
     cfg.skip_union(|union_| {
         match union_.ident() {
-            // FIXME(emscripten): Investigate why the test fails.
-            // Skip for now to unblock CI.
-            "sigval" => true,
-
             // No epoll support
             // https://github.com/emscripten-core/emscripten/issues/5033
             ty if ty.starts_with("epoll") => true,
@@ -3115,6 +3246,9 @@ fn test_emscripten(target: &str) {
 
     cfg.skip_struct(move |struct_| {
         match struct_.ident() {
+            // This is actually a union, not a struct
+            "sigval" => true,
+
             // FIXME(emscripten): Investigate why the test fails.
             // Skip for now to unblock CI.
             "pthread_condattr_t" => true,
@@ -3193,14 +3327,14 @@ fn test_emscripten(target: &str) {
             ("ifaddrs", "ifa_ifu") => true,
             // sighandler_t type is super weird
             ("sigaction", "sa_sigaction") => true,
+            // sigval is actually a union, but we pretend it's a struct
+            ("sigevent", "sigev_value") => true,
             _ => false,
         }
     });
 
     cfg.skip_struct_field(move |struct_, field| {
         match (struct_.ident(), field.ident()) {
-            // _sigev_un is an anonymous union
-            ("sigevent", "_sigev_un") => true,
             // this is actually a union on linux, so we can't represent it well and
             // just insert some padding.
             ("siginfo_t", "_pad") => true,
@@ -3397,6 +3531,9 @@ fn test_neutrino(target: &str) {
         match struct_.ident() {
             "Elf64_Phdr" | "Elf32_Phdr" => true,
 
+            // FIXME(union): This is actually a union, not a struct
+            "sigval" => true,
+
             // union
             "_channel_connect_attr" => true,
 
@@ -3419,6 +3556,9 @@ fn test_neutrino(target: &str) {
     cfg.skip_fn(move |func| {
         // skip those that are manually verified
         match func.ident() {
+            // FIXME: https://github.com/rust-lang/libc/issues/1272
+            "execv" | "execve" | "execvp" | "execvpe" => true,
+
             // wrong signature
             "signal" => true,
 
@@ -3451,6 +3591,8 @@ fn test_neutrino(target: &str) {
     });
 
     cfg.skip_struct_field_type(move |struct_, field| {
+        // sigval is actually a union, but we pretend it's a struct
+        struct_.ident() == "sigevent" && field.ident() == "sigev_value" ||
         // Anonymous structures
         struct_.ident() == "_idle_hook" && field.ident() == "time"
     });
@@ -3461,6 +3603,8 @@ fn test_neutrino(target: &str) {
             ("__sched_param", "reserved")
             | ("sched_param", "reserved")
             | ("sigevent", "__padding1") // ensure alignment
+            | ("sigevent", "__padding2") // union
+            | ("sigevent", "__sigev_un2") // union
             | ("sigaction", "sa_sigaction") // sighandler_t type is super weird
             | ("syspage_entry", "__reserved") // does not exist
         )
@@ -3605,8 +3749,10 @@ fn test_vxworks(target: &str) {
 
     // FIXME(vxworks)
     cfg.skip_fn(move |func| match func.ident() {
+        // sigval
+        "sigqueue" | "_sigqueue"
         // sighandler_t
-        "signal"
+        | "signal"
         // This is used a realpath and not _realpath
         | "_realpath"
         // not used in static linking by default
@@ -3776,7 +3922,6 @@ fn test_linux(target: &str) {
         "netinet/ip.h",
         "netinet/tcp.h",
         "netinet/udp.h",
-        (!musl && (x86_64 || s390x), "netiucv/iucv.h"),
         (l4re, "netpacket/packet.h"),
         "poll.h",
         "pthread.h",
@@ -3986,9 +4131,9 @@ fn test_linux(target: &str) {
     cfg.rename_struct_field(move |struct_, field| {
         match (struct_.ident(), field.ident()) {
             // Our stat *_nsec fields normally don't actually exist but are part
-            // of a timeval struct - this is fixed in musl_v1_2_3
+            // of a timeval struct
             ("stat" | "statfs" | "statvfs" | "stat64" | "statfs64" | "statvfs64", f)
-                if !musl_v1_2_3 && f.ends_with("_nsec") =>
+                if f.ends_with("_nsec") =>
             {
                 Some(f.replace("e_nsec", ".tv_nsec"))
             }
@@ -4098,6 +4243,9 @@ fn test_linux(target: &str) {
             // can be an anonymous struct, so an extra struct,
             // which is absent in glibc, has to be defined.
             "__timeval" => true,
+
+            // FIXME(union): This is actually a union, not a struct
+            "sigval" => true,
 
             // This type is tested in the `linux_termios.rs` file since there
             // are header conflicts when including them with all the other
@@ -4419,6 +4567,9 @@ fn test_linux(target: &str) {
             // value changed
             "NF_NETDEV_NUMHOOKS" if sparc64 => true,
 
+            // DIFF(main): fixed in 1.0 with e9abac9ac2
+            "CLONE_CLEAR_SIGHAND" | "CLONE_INTO_CGROUP" => true,
+
             // kernel 6.9 minimum
             "RWF_NOAPPEND" => true,
 
@@ -4499,6 +4650,10 @@ fn test_linux(target: &str) {
             "SO_DEVMEM_LINEAR" | "SO_DEVMEM_DMABUF" | "SO_DEVMEM_DONTNEED"
             | "SCM_DEVMEM_LINEAR" | "SCM_DEVMEM_DMABUF" => true,
 
+            // FIXME(linux): Requires >= 6.4 kernel headers.
+            "PTRACE_SET_SYSCALL_USER_DISPATCH_CONFIG"
+            | "PTRACE_GET_SYSCALL_USER_DISPATCH_CONFIG" => true,
+
             // FIXME(linux): Requires >= 6.14 kernel headers.
             "SECBIT_EXEC_DENY_INTERACTIVE"
             | "SECBIT_EXEC_DENY_INTERACTIVE_LOCKED"
@@ -4555,6 +4710,9 @@ fn test_linux(target: &str) {
         let name = function.ident();
         // skip those that are manually verified
         match name {
+            // FIXME: https://github.com/rust-lang/libc/issues/1272
+            "execv" | "execve" | "execvp" | "execvpe" | "fexecve" => true,
+
             // There are two versions of the sterror_r function, see
             //
             // https://linux.die.net/man/3/strerror_r
@@ -4631,6 +4789,12 @@ fn test_linux(target: &str) {
             // Not defined in uclibc as of 1.0.34
             "gettid" if uclibc => true,
 
+            // pthread_sigqueue uses sigval, which was initially declared
+            // as a struct but should be defined as a union. However due
+            // to the issues described here: https://github.com/rust-lang/libc/issues/2816
+            // it can't be changed from struct.
+            "pthread_sigqueue" => true,
+
             // There are two versions of basename(3) on Linux with glibc, see
             //
             // https://man7.org/linux/man-pages/man3/basename.3.html
@@ -4697,8 +4861,8 @@ fn test_linux(target: &str) {
             ("glob_t", "gl_flags") if musl => true,
             // musl seems to define this as an *anonymous* bitfield
             ("statvfs", "__f_unused") if musl => true,
-            // _sigev_un is an anonymous union
-            ("sigevent", "_sigev_un") => true,
+            // sigev_notify_thread_id is actually part of a sigev_un union
+            ("sigevent", "sigev_notify_thread_id") => true,
             // signalfd had SIGSYS fields added in Linux 4.18, but no libc release
             // has them yet.
             (
@@ -4788,6 +4952,8 @@ fn test_linux(target: &str) {
     cfg.skip_roundtrip(move |s| match s {
         // FIXME(1.0):
         "mcontext_t" if s390x => true,
+        // FIXME(union): This is actually a union.
+        "fpreg_t" if s390x => true,
 
         // The test doesn't work on some env:
         "ipv6_mreq"
@@ -5161,6 +5327,8 @@ fn test_haiku(target: &str) {
 
     cfg.skip_struct(move |struct_| {
         match struct_.ident() {
+            // FIXME(union): actually a union
+            "sigval" => true,
             // FIXME(haiku): locale_t does not exist on Haiku
             "locale_t" => true,
             // FIXME(haiku): rusage has a different layout on Haiku
@@ -5205,6 +5373,8 @@ fn test_haiku(target: &str) {
     cfg.skip_fn(move |func| {
         // skip those that are manually verified
         match func.ident() {
+            // FIXME(haiku): https://github.com/rust-lang/libc/issues/1272
+            "execv" | "execve" | "execvp" | "execvpe" => true,
             // FIXME(haiku): does not exist on haiku
             "open_wmemstream" => true,
             "mlockall" | "munlockall" => true,
@@ -5267,8 +5437,10 @@ fn test_haiku(target: &str) {
             ("stat", "st_crtime_nsec") => true,
 
             // these are actually unions, but we cannot represent it well
+            ("siginfo_t", "sigval") => true,
             ("sem_t", "named_sem_id") => true,
             ("sigaction", "sa_sigaction") => true,
+            ("sigevent", "sigev_value") => true,
             ("fpu_state", "_fpreg") => true,
             ("cpu_topology_node_info", "data") => true,
             // these fields have a simplified data definition in libc
@@ -5321,6 +5493,8 @@ fn test_haiku(target: &str) {
             | "cpu_topology_package_info"
             | "cpu_topology_core_info" => Some(ty.to_string()),
 
+            // is actually a union
+            "sigval" => Some("union sigval".to_string()),
             t if t.ends_with("_t") => Some(t.to_string()),
             _ => None,
         }
@@ -5458,7 +5632,12 @@ fn test_aix(target: &str) {
 
     cfg.rename_struct_ty(move |ty| match ty {
         "DIR" | "FILE" | "ACTION" => Some(ty.to_string()),
+
+        // 'sigval' is a struct in Rust, but a union in C.
+        "sigval" => Some(format!("union sigval")),
+
         t if t.ends_with("_t") => Some(t.to_string()),
+
         _ => None,
     });
 
@@ -5490,6 +5669,9 @@ fn test_aix(target: &str) {
 
     cfg.skip_struct(move |struct_| {
         match struct_.ident() {
+            // FIXME(union): actually a union.
+            "sigval" => true,
+
             // 'struct fpreg_t' is not defined in AIX headers. It is created to
             // allow type 'double' to be used in signal contexts.
             "fpreg_t" => true,

@@ -41,10 +41,7 @@ pub type uint32_t = u32;
 pub type uint64_t = u64;
 
 cfg_if! {
-    if #[cfg(all(
-        target_arch = "aarch64",
-        not(any(target_os = "windows", target_vendor = "apple"))
-    ))] {
+    if #[cfg(all(target_arch = "aarch64", not(target_os = "windows")))] {
         /// C `__int128` (a GCC extension that's part of many ABIs)
         #[deprecated(since = "0.2.184", note = "Use i128 instead.")]
         pub type __int128 = i128;
@@ -56,13 +53,6 @@ cfg_if! {
         pub type __int128_t = i128;
         /// C __uint128_t (alternate name for [__uint128][])
         #[deprecated(since = "0.2.184", note = "Use u128 instead.")]
-        pub type __uint128_t = u128;
-    } else if #[cfg(all(target_arch = "aarch64", target_vendor = "apple"))] {
-        /// C `__int128_t`
-        #[deprecated(since = "0.2.184", note = "Use i128 instead.")]
-        pub type __int128_t = i128;
-        /// C `__uint128_t`
-        #[deprecated(since = "0.2.184", note = "Use ux128 instead.")]
         pub type __uint128_t = u128;
     }
 }

@@ -795,7 +795,7 @@ pub const RUSAGE_BOTH: c_int = -2;
 pub const RUSAGE_THREAD: c_int = 1;
 
 // sys/select.h
-pub const FD_SETSIZE: c_int = 1024;
+pub const FD_SETSIZE: usize = 1024;
 
 // sys/socket.h
 pub const AF_INET: c_int = 2;

@@ -10,7 +10,7 @@ repository = "https://github.com/rust-lang/libc"
 
 [dependencies]
 cfg-if = "1.0.4"
-libc = { path = "..", default-features = false }
+libc = { path = "..", version = "0.2.184", default-features = false }
 
 [dev-dependencies]
 syn = { version = "2.0.108", features = ["full", "visit"] }
@@ -20,12 +20,14 @@ annotate-snippets = { version = "0.11.5", features = ["testing-colors"] }
 
 [build-dependencies]
 cc = "1.2.43"
-ctest = { path = "../ctest" }
+# Use the in-tree `ctest` from the `main` branch via crates.io
+ctest = "0.5.0-beta.3"
 regex = "1.12.2"
 
 [features]
 default = ["std"]
 std = ["libc/std"]
+align = ["libc/align"]
 extra_traits = ["libc/extra_traits"]
 
 [[test]]

@@ -36,11 +36,12 @@ pub type Elf64_Xword = u64;
 
 pub type iconv_t = *mut c_void;
 
-c_enum! {
+e! {
+    #[repr(C)]
     pub enum fae_action {
-        pub FAE_OPEN,
-        pub FAE_DUP2,
-        pub FAE_CLOSE,
+        FAE_OPEN,
+        FAE_DUP2,
+        FAE_CLOSE,
     }
 }
 
@@ -484,7 +485,7 @@ s! {
 
     pub struct accept_filter_arg {
         pub af_name: [c_char; 16],
-        pub af_arg: [c_char; 256 - 16],
+        af_arg: [c_char; 256 - 16],
     }
 
     pub struct ki_sigset_t {
@@ -1258,7 +1259,7 @@ pub const _SC_SCHED_RT_TS: c_int = 2001;
 pub const _SC_SCHED_PRI_MIN: c_int = 2002;
 pub const _SC_SCHED_PRI_MAX: c_int = 2003;
 
-pub const FD_SETSIZE: c_int = 0x100;
+pub const FD_SETSIZE: usize = 0x100;
 
 pub const ST_NOSUID: c_ulong = 8;
 
@@ -1687,7 +1688,7 @@ pub const PT_LWPNEXT: c_int = 25;
 pub const PT_SET_SIGPASS: c_int = 26;
 pub const PT_GET_SIGPASS: c_int = 27;
 pub const PT_FIRSTMACH: c_int = 32;
-pub const POSIX_SPAWN_RETURNERROR: c_short = 0x40;
+pub const POSIX_SPAWN_RETURNERROR: c_int = 0x40;
 
 // Flags for chflags(2)
 pub const SF_APPEND: c_ulong = 0x00040000;
@@ -2308,8 +2309,6 @@ extern "C" {
         result: *mut *mut crate::group,
     ) -> c_int;
 
-    pub fn mincore(addr: *mut c_void, len: size_t, vec: *mut c_char) -> c_int;
-
     pub fn efopen(p: *const c_char, m: *const c_char) -> crate::FILE;
     pub fn emalloc(n: size_t) -> *mut c_void;
     pub fn ecalloc(n: size_t, c: size_t) -> *mut c_void;
@@ -2408,14 +2407,12 @@ extern "C" {
         name: *const c_char,
         value: *const c_void,
         size: size_t,
-        flags: c_int,
     ) -> c_int;
     pub fn lsetxattr(
         path: *const c_char,
         name: *const c_char,
         value: *const c_void,
         size: size_t,
-        flags: c_int,
     ) -> c_int;
     pub fn fsetxattr(
         filedes: c_int,
@@ -2429,7 +2426,7 @@ extern "C" {
     pub fn flistxattr(filedes: c_int, list: *mut c_char, size: size_t) -> ssize_t;
     pub fn removexattr(path: *const c_char, name: *const c_char) -> c_int;
     pub fn lremovexattr(path: *const c_char, name: *const c_char) -> c_int;
-    pub fn fremovexattr(fd: c_int, name: *const c_char) -> c_int;
+    pub fn fremovexattr(fd: c_int, path: *const c_char, name: *const c_char) -> c_int;
 
     pub fn string_to_flags(
         string_p: *mut *mut c_char,

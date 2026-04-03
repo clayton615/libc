@@ -62,20 +62,19 @@ pub type pthread_barrierattr_t = *mut c_void;
 pub type posix_spawn_file_actions_t = *mut c_char;
 pub type iconv_t = *mut c_void;
 
-c_enum! {
+e! {
     #[repr(u32)]
     pub enum uio_rw {
-        pub UIO_READ = 0,
-        pub UIO_WRITE,
-        pub UIO_READ_NO_MOVE,
-        pub UIO_WRITE_NO_MOVE,
-        pub UIO_PWRITE,
+        UIO_READ = 0,
+        UIO_WRITE,
+        UIO_READ_NO_MOVE,
+        UIO_WRITE_NO_MOVE,
+        UIO_PWRITE,
     }
-
     #[repr(u32)]
     pub enum ACTION {
-        pub FIND = 0,
-        pub ENTER,
+        FIND = 0,
+        ENTER,
     }
 }
 
@@ -1148,13 +1147,14 @@ pub const CPUSTATES: c_int = 4;
 pub const SEM_FAILED: *mut sem_t = -1isize as *mut crate::sem_t;
 
 // spawn.h
-pub const POSIX_SPAWN_SETPGROUP: c_short = 0x1;
-pub const POSIX_SPAWN_SETSIGMASK: c_short = 0x2;
-pub const POSIX_SPAWN_SETSIGDEF: c_short = 0x4;
-pub const POSIX_SPAWN_SETSCHEDULER: c_short = 0x8;
-pub const POSIX_SPAWN_SETSCHEDPARAM: c_short = 0x10;
-pub const POSIX_SPAWN_RESETIDS: c_short = 0x20;
-pub const POSIX_SPAWN_FORK_HANDLERS: c_short = 0x1000;
+// DIFF(main): changed to `c_short` in f62eb023ab
+pub const POSIX_SPAWN_SETPGROUP: c_int = 0x1;
+pub const POSIX_SPAWN_SETSIGMASK: c_int = 0x2;
+pub const POSIX_SPAWN_SETSIGDEF: c_int = 0x4;
+pub const POSIX_SPAWN_SETSCHEDULER: c_int = 0x8;
+pub const POSIX_SPAWN_SETSCHEDPARAM: c_int = 0x10;
+pub const POSIX_SPAWN_RESETIDS: c_int = 0x20;
+pub const POSIX_SPAWN_FORK_HANDLERS: c_int = 0x1000;
 
 // stdio.h
 pub const EOF: c_int = -1;
@@ -2029,7 +2029,7 @@ pub const POWER_8: c_int = 0x10000;
 pub const POWER_9: c_int = 0x20000;
 
 // sys/time.h
-pub const FD_SETSIZE: c_int = 65534;
+pub const FD_SETSIZE: usize = 65534;
 pub const TIMEOFDAY: c_int = 9;
 pub const CLOCK_REALTIME: crate::clockid_t = TIMEOFDAY as clockid_t;
 pub const CLOCK_MONOTONIC: crate::clockid_t = 10;
@@ -2863,7 +2863,10 @@ extern "C" {
     pub fn faccessat(dirfd: c_int, pathname: *const c_char, mode: c_int, flags: c_int) -> c_int;
     pub fn fattach(fildes: c_int, path: *const c_char) -> c_int;
     pub fn fdatasync(fd: c_int) -> c_int;
-    pub fn fexecve(fd: c_int, argv: *const *mut c_char, envp: *const *mut c_char) -> c_int;
+
+    // DIFF(main): changed to `*const *mut` in e77f551de9
+    pub fn fexecve(fd: c_int, argv: *const *const c_char, envp: *const *const c_char) -> c_int;
+
     pub fn ffs(value: c_int) -> c_int;
     pub fn ffsl(value: c_long) -> c_int;
     pub fn ffsll(value: c_longlong) -> c_int;

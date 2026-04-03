@@ -15,12 +15,12 @@ pub type door_attr_t = c_uint;
 pub type door_id_t = c_ulonglong;
 pub type lgrp_affinity_t = c_uint;
 
-c_enum! {
+e! {
     #[repr(u32)]
     pub enum lgrp_rsrc_t {
-        pub LGRP_RSRC_CPU = 0,
-        pub LGRP_RSRC_MEM = 1,
-        pub LGRP_RSRC_TYPES = 2,
+        LGRP_RSRC_CPU = 0,
+        LGRP_RSRC_MEM = 1,
+        LGRP_RSRC_TYPES = 2,
     }
 }
 
@@ -157,7 +157,8 @@ pub const PRIV_USER: c_uint = PRIV_DEBUG
     | PRIV_PROC_TPD_RESET;
 
 extern "C" {
-    pub fn fexecve(fd: c_int, argv: *const *mut c_char, envp: *const *mut c_char) -> c_int;
+    // DIFF(main): changed to `*const *mut` in e77f551de9
+    pub fn fexecve(fd: c_int, argv: *const *const c_char, envp: *const *const c_char) -> c_int;
 
     pub fn mincore(addr: *mut c_void, len: size_t, vec: *mut c_char) -> c_int;
 

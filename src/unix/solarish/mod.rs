@@ -892,9 +892,9 @@ pub const IPV6_BOUND_IF: c_int = 0x41;
 
 cfg_if! {
     if #[cfg(target_pointer_width = "64")] {
-        pub const FD_SETSIZE: c_int = 65536;
+        pub const FD_SETSIZE: usize = 65536;
     } else {
-        pub const FD_SETSIZE: c_int = 1024;
+        pub const FD_SETSIZE: usize = 1024;
     }
 }
 

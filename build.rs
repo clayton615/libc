@@ -79,7 +79,7 @@ fn main() {
     } else if libc_ci {
         which_freebsd().unwrap_or(12)
     } else {
-        12 // regardless of CARGO_FEATURE_RUSTC_DEP_OF_STD env var
+        12
     };
 
     match which_freebsd {

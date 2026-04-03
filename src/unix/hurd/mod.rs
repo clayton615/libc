@@ -1129,7 +1129,7 @@ pub const SHM_REMAP: c_int = 0o40000;
 pub const SHM_LOCK: c_int = 11;
 pub const SHM_UNLOCK: c_int = 12;
 // unistd.h
-pub const __FD_SETSIZE: c_int = 256;
+pub const __FD_SETSIZE: usize = 256;
 pub const R_OK: c_int = 4;
 pub const W_OK: c_int = 2;
 pub const X_OK: c_int = 1;
@@ -1174,7 +1174,7 @@ pub const PDP_ENDIAN: usize = 3412;
 pub const BYTE_ORDER: usize = 1234;
 
 // sys/select.h
-pub const FD_SETSIZE: c_int = 256;
+pub const FD_SETSIZE: usize = 256;
 pub const __SIZEOF_PTHREAD_MUTEX_T: usize = 32;
 pub const __SIZEOF_PTHREAD_ATTR_T: usize = 32;
 pub const __SIZEOF_PTHREAD_RWLOCK_T: usize = 28;
@@ -1506,8 +1506,8 @@ pub const _POSIX_MQ_OPEN_MAX: usize = 8;
 pub const _POSIX_MQ_PRIO_MAX: usize = 32;
 pub const _POSIX_NAME_MAX: usize = 14;
 pub const _POSIX_NGROUPS_MAX: usize = 8;
-pub const _POSIX_OPEN_MAX: c_int = 20;
-pub const _POSIX_FD_SETSIZE: c_int = 20;
+pub const _POSIX_OPEN_MAX: usize = 20;
+pub const _POSIX_FD_SETSIZE: usize = 20;
 pub const _POSIX_PATH_MAX: usize = 256;
 pub const _POSIX_PIPE_BUF: usize = 512;
 pub const _POSIX_RE_DUP_MAX: usize = 255;
@@ -2685,8 +2685,8 @@ pub const XATTR_CREATE: c_int = 0x1;
 pub const XATTR_REPLACE: c_int = 0x2;
 
 // spawn.h
-pub const POSIX_SPAWN_USEVFORK: c_short = 64;
-pub const POSIX_SPAWN_SETSID: c_short = 128;
+pub const POSIX_SPAWN_USEVFORK: c_int = 64;
+pub const POSIX_SPAWN_SETSID: c_int = 128;
 
 // sys/syslog.h
 pub const LOG_CRON: c_int = 9 << 3;
@@ -4092,12 +4092,14 @@ extern "C" {
         envp: *const *mut c_char,
         flags: c_int,
     ) -> c_int;
+
+    // DIFF(main): changed to `*const *mut` in e77f551de9
     pub fn execvpe(
         file: *const c_char,
-        argv: *const *mut c_char,
-        envp: *const *mut c_char,
+        argv: *const *const c_char,
+        envp: *const *const c_char,
     ) -> c_int;
-    pub fn fexecve(fd: c_int, argv: *const *mut c_char, envp: *const *mut c_char) -> c_int;
+    pub fn fexecve(fd: c_int, argv: *const *const c_char, envp: *const *const c_char) -> c_int;
 
     pub fn daemon(nochdir: c_int, noclose: c_int) -> c_int;
 

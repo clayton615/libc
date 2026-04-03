@@ -175,46 +175,62 @@ pub type copyfile_callback_t = Option<
 pub type attrgroup_t = u32;
 pub type vol_capabilities_set_t = [u32; 4];
 
+deprecated_mach! {
+    pub type mach_timebase_info_data_t = mach_timebase_info;
+}
+
 extern_ty! {
     pub enum timezone {}
 }
 
-c_enum! {
-    #[repr(u32)]
-    pub enum sysdir_search_path_directory_t {
-        pub SYSDIR_DIRECTORY_APPLICATION = 1,
-        pub SYSDIR_DIRECTORY_DEMO_APPLICATION = 2,
-        pub SYSDIR_DIRECTORY_DEVELOPER_APPLICATION = 3,
-        pub SYSDIR_DIRECTORY_ADMIN_APPLICATION = 4,
-        pub SYSDIR_DIRECTORY_LIBRARY = 5,
-        pub SYSDIR_DIRECTORY_DEVELOPER = 6,
-        pub SYSDIR_DIRECTORY_USER = 7,
-        pub SYSDIR_DIRECTORY_DOCUMENTATION = 8,
-        pub SYSDIR_DIRECTORY_DOCUMENT = 9,
-        pub SYSDIR_DIRECTORY_CORESERVICE = 10,
-        pub SYSDIR_DIRECTORY_AUTOSAVED_INFORMATION = 11,
-        pub SYSDIR_DIRECTORY_DESKTOP = 12,
-        pub SYSDIR_DIRECTORY_CACHES = 13,
-        pub SYSDIR_DIRECTORY_APPLICATION_SUPPORT = 14,
-        pub SYSDIR_DIRECTORY_DOWNLOADS = 15,
-        pub SYSDIR_DIRECTORY_INPUT_METHODS = 16,
-        pub SYSDIR_DIRECTORY_MOVIES = 17,
-        pub SYSDIR_DIRECTORY_MUSIC = 18,
-        pub SYSDIR_DIRECTORY_PICTURES = 19,
-        pub SYSDIR_DIRECTORY_PRINTER_DESCRIPTION = 20,
-        pub SYSDIR_DIRECTORY_SHARED_PUBLIC = 21,
-        pub SYSDIR_DIRECTORY_PREFERENCE_PANES = 22,
-        pub SYSDIR_DIRECTORY_ALL_APPLICATIONS = 100,
-        pub SYSDIR_DIRECTORY_ALL_LIBRARIES = 101,
+#[derive(Debug)]
+#[repr(u32)]
+pub enum sysdir_search_path_directory_t {
+    SYSDIR_DIRECTORY_APPLICATION = 1,
+    SYSDIR_DIRECTORY_DEMO_APPLICATION = 2,
+    SYSDIR_DIRECTORY_DEVELOPER_APPLICATION = 3,
+    SYSDIR_DIRECTORY_ADMIN_APPLICATION = 4,
+    SYSDIR_DIRECTORY_LIBRARY = 5,
+    SYSDIR_DIRECTORY_DEVELOPER = 6,
+    SYSDIR_DIRECTORY_USER = 7,
+    SYSDIR_DIRECTORY_DOCUMENTATION = 8,
+    SYSDIR_DIRECTORY_DOCUMENT = 9,
+    SYSDIR_DIRECTORY_CORESERVICE = 10,
+    SYSDIR_DIRECTORY_AUTOSAVED_INFORMATION = 11,
+    SYSDIR_DIRECTORY_DESKTOP = 12,
+    SYSDIR_DIRECTORY_CACHES = 13,
+    SYSDIR_DIRECTORY_APPLICATION_SUPPORT = 14,
+    SYSDIR_DIRECTORY_DOWNLOADS = 15,
+    SYSDIR_DIRECTORY_INPUT_METHODS = 16,
+    SYSDIR_DIRECTORY_MOVIES = 17,
+    SYSDIR_DIRECTORY_MUSIC = 18,
+    SYSDIR_DIRECTORY_PICTURES = 19,
+    SYSDIR_DIRECTORY_PRINTER_DESCRIPTION = 20,
+    SYSDIR_DIRECTORY_SHARED_PUBLIC = 21,
+    SYSDIR_DIRECTORY_PREFERENCE_PANES = 22,
+    SYSDIR_DIRECTORY_ALL_APPLICATIONS = 100,
+    SYSDIR_DIRECTORY_ALL_LIBRARIES = 101,
+}
+impl Copy for sysdir_search_path_directory_t {}
+impl Clone for sysdir_search_path_directory_t {
+    fn clone(&self) -> sysdir_search_path_directory_t {
+        *self
     }
+}
 
-    #[repr(u32)]
-    pub enum sysdir_search_path_domain_mask_t {
-        pub SYSDIR_DOMAIN_MASK_USER = 1 << 0,
-        pub SYSDIR_DOMAIN_MASK_LOCAL = 1 << 1,
-        pub SYSDIR_DOMAIN_MASK_NETWORK = 1 << 2,
-        pub SYSDIR_DOMAIN_MASK_SYSTEM = 1 << 3,
-        pub SYSDIR_DOMAIN_MASK_ALL = 0x0ffff,
+#[derive(Debug)]
+#[repr(u32)]
+pub enum sysdir_search_path_domain_mask_t {
+    SYSDIR_DOMAIN_MASK_USER = (1 << 0),
+    SYSDIR_DOMAIN_MASK_LOCAL = (1 << 1),
+    SYSDIR_DOMAIN_MASK_NETWORK = (1 << 2),
+    SYSDIR_DOMAIN_MASK_SYSTEM = (1 << 3),
+    SYSDIR_DOMAIN_MASK_ALL = 0x0ffff,
+}
+impl Copy for sysdir_search_path_domain_mask_t {}
+impl Clone for sysdir_search_path_domain_mask_t {
+    fn clone(&self) -> sysdir_search_path_domain_mask_t {
+        *self
     }
 }
 
@@ -285,6 +301,12 @@ s! {
         pub ai_canonname: *mut c_char,
         pub ai_addr: *mut crate::sockaddr,
         pub ai_next: *mut addrinfo,
+    }
+
+    #[deprecated(since = "0.2.55", note = "Use the `mach2` crate instead")]
+    pub struct mach_timebase_info {
+        pub numer: u32,
+        pub denom: u32,
     }
 
     pub struct stat {
@@ -472,7 +494,10 @@ s! {
         pub rmx_rtt: u32,
         pub rmx_rttvar: u32,
         pub rmx_pksent: u32,
-        pub rmx_filler: [u32; 4],
+        /// This field does not exist anymore, the u32 is now part of a resized
+        /// `rmx_filler` array.
+        pub rmx_state: u32,
+        pub rmx_filler: [u32; 3],
     }
 
     pub struct rt_msghdr {
@@ -621,6 +646,29 @@ s! {
         pub cr_uid: crate::uid_t,
         pub cr_ngroups: c_short,
         pub cr_groups: [crate::gid_t; 16],
+    }
+
+    #[deprecated(since = "0.2.55", note = "Use the `mach2` crate instead")]
+    pub struct mach_header {
+        pub magic: u32,
+        pub cputype: cpu_type_t,
+        pub cpusubtype: cpu_subtype_t,
+        pub filetype: u32,
+        pub ncmds: u32,
+        pub sizeofcmds: u32,
+        pub flags: u32,
+    }
+
+    #[deprecated(since = "0.2.55", note = "Use the `mach2` crate instead")]
+    pub struct mach_header_64 {
+        pub magic: u32,
+        pub cputype: cpu_type_t,
+        pub cpusubtype: cpu_subtype_t,
+        pub filetype: u32,
+        pub ncmds: u32,
+        pub sizeofcmds: u32,
+        pub flags: u32,
+        pub reserved: u32,
     }
 
     pub struct segment_command {
@@ -865,7 +913,9 @@ s! {
 
     pub struct vnode_info_path {
         pub vip_vi: vnode_info,
-        pub vip_path: [c_char; crate::MAXPATHLEN as usize],
+        // Normally it's `vip_path: [c_char; MAXPATHLEN]` but because libc supports an old rustc
+        // version, we go around this limitation like this.
+        pub vip_path: [[c_char; 32]; 32],
     }
 
     pub struct proc_vnodepathinfo {
@@ -1337,6 +1387,7 @@ s! {
         __unused1: Padding<*mut c_void>, //actually a function pointer
         pub sigev_notify_attributes: *mut crate::pthread_attr_t,
     }
+
     pub struct processor_cpu_load_info {
         pub cpu_ticks: [c_uint; CPU_STATE_MAX as usize],
     }
@@ -1632,6 +1683,31 @@ cfg_if! {
                 unsafe { self.val.hash(state) };
             }
         }
+    }
+}
+
+cfg_if! {
+    if #[cfg(feature = "extra_traits")] {
+        impl PartialEq for ifconf
+        where
+            Self: Copy,
+        {
+            fn eq(&self, other: &Self) -> bool {
+                let len_ptr1 = core::ptr::addr_of!(self.ifc_len);
+                let len_ptr2 = core::ptr::addr_of!(other.ifc_len);
+                let ifcu_ptr1 = core::ptr::addr_of!(self.ifc_ifcu);
+                let ifcu_ptr2 = core::ptr::addr_of!(other.ifc_ifcu);
+
+                // SAFETY: `ifconf` implements `Copy` so the reads are valid
+                let len1 = unsafe { len_ptr1.read_unaligned() };
+                let len2 = unsafe { len_ptr2.read_unaligned() };
+                let ifcu1 = unsafe { ifcu_ptr1.read_unaligned() };
+                let ifcu2 = unsafe { ifcu_ptr2.read_unaligned() };
+
+                len1 == len2 && ifcu1 == ifcu2
+            }
+        }
+        impl Eq for ifconf {}
 
         impl PartialEq for __c_anonymous_ifk_data {
             fn eq(&self, other: &__c_anonymous_ifk_data) -> bool {
@@ -1698,6 +1774,21 @@ cfg_if! {
                     self.ifru_cap.hash(state);
                     self.ifru_functional_type.hash(state);
                 }
+            }
+        }
+
+        impl Eq for __c_anonymous_ifc_ifcu {}
+
+        impl PartialEq for __c_anonymous_ifc_ifcu {
+            fn eq(&self, other: &__c_anonymous_ifc_ifcu) -> bool {
+                unsafe { self.ifcu_buf == other.ifcu_buf && self.ifcu_req == other.ifcu_req }
+            }
+        }
+
+        impl hash::Hash for __c_anonymous_ifc_ifcu {
+            fn hash<H: hash::Hasher>(&self, state: &mut H) {
+                unsafe { self.ifcu_buf.hash(state) };
+                unsafe { self.ifcu_req.hash(state) };
             }
         }
 
@@ -1992,6 +2083,104 @@ pub const PROCESSOR_PM_REGS_INFO: c_int = 0x10000001;
 pub const PROCESSOR_TEMPERATURE: c_int = 0x10000002;
 pub const PROCESSOR_SET_LOAD_INFO: c_int = 4;
 pub const PROCESSOR_SET_BASIC_INFO: c_int = 5;
+
+deprecated_mach! {
+    pub const VM_FLAGS_FIXED: c_int = 0x0000;
+    pub const VM_FLAGS_ANYWHERE: c_int = 0x0001;
+    pub const VM_FLAGS_PURGABLE: c_int = 0x0002;
+    pub const VM_FLAGS_RANDOM_ADDR: c_int = 0x0008;
+    pub const VM_FLAGS_NO_CACHE: c_int = 0x0010;
+    pub const VM_FLAGS_RESILIENT_CODESIGN: c_int = 0x0020;
+    pub const VM_FLAGS_RESILIENT_MEDIA: c_int = 0x0040;
+    pub const VM_FLAGS_OVERWRITE: c_int = 0x4000;
+    pub const VM_FLAGS_SUPERPAGE_MASK: c_int = 0x70000;
+    pub const VM_FLAGS_RETURN_DATA_ADDR: c_int = 0x100000;
+    pub const VM_FLAGS_RETURN_4K_DATA_ADDR: c_int = 0x800000;
+    pub const VM_FLAGS_ALIAS_MASK: c_int = 0xFF000000;
+    pub const VM_FLAGS_USER_ALLOCATE: c_int = 0xff07401f;
+    pub const VM_FLAGS_USER_MAP: c_int = 0xff97401f;
+    pub const VM_FLAGS_USER_REMAP: c_int = VM_FLAGS_FIXED
+        | VM_FLAGS_ANYWHERE
+        | VM_FLAGS_RANDOM_ADDR
+        | VM_FLAGS_OVERWRITE
+        | VM_FLAGS_RETURN_DATA_ADDR
+        | VM_FLAGS_RESILIENT_CODESIGN;
+
+    pub const VM_FLAGS_SUPERPAGE_SHIFT: c_int = 16;
+    pub const SUPERPAGE_NONE: c_int = 0;
+    pub const SUPERPAGE_SIZE_ANY: c_int = 1;
+    pub const VM_FLAGS_SUPERPAGE_NONE: c_int = SUPERPAGE_NONE << VM_FLAGS_SUPERPAGE_SHIFT;
+    pub const VM_FLAGS_SUPERPAGE_SIZE_ANY: c_int = SUPERPAGE_SIZE_ANY << VM_FLAGS_SUPERPAGE_SHIFT;
+    pub const SUPERPAGE_SIZE_2MB: c_int = 2;
+    pub const VM_FLAGS_SUPERPAGE_SIZE_2MB: c_int = SUPERPAGE_SIZE_2MB << VM_FLAGS_SUPERPAGE_SHIFT;
+
+    pub const VM_MEMORY_MALLOC: c_int = 1;
+    pub const VM_MEMORY_MALLOC_SMALL: c_int = 2;
+    pub const VM_MEMORY_MALLOC_LARGE: c_int = 3;
+    pub const VM_MEMORY_MALLOC_HUGE: c_int = 4;
+    pub const VM_MEMORY_SBRK: c_int = 5;
+    pub const VM_MEMORY_REALLOC: c_int = 6;
+    pub const VM_MEMORY_MALLOC_TINY: c_int = 7;
+    pub const VM_MEMORY_MALLOC_LARGE_REUSABLE: c_int = 8;
+    pub const VM_MEMORY_MALLOC_LARGE_REUSED: c_int = 9;
+    pub const VM_MEMORY_ANALYSIS_TOOL: c_int = 10;
+    pub const VM_MEMORY_MALLOC_NANO: c_int = 11;
+    pub const VM_MEMORY_MACH_MSG: c_int = 20;
+    pub const VM_MEMORY_IOKIT: c_int = 21;
+    pub const VM_MEMORY_STACK: c_int = 30;
+    pub const VM_MEMORY_GUARD: c_int = 31;
+    pub const VM_MEMORY_SHARED_PMAP: c_int = 32;
+    pub const VM_MEMORY_DYLIB: c_int = 33;
+    pub const VM_MEMORY_OBJC_DISPATCHERS: c_int = 34;
+    pub const VM_MEMORY_UNSHARED_PMAP: c_int = 35;
+    pub const VM_MEMORY_APPKIT: c_int = 40;
+    pub const VM_MEMORY_FOUNDATION: c_int = 41;
+    pub const VM_MEMORY_COREGRAPHICS: c_int = 42;
+    pub const VM_MEMORY_CORESERVICES: c_int = 43;
+    pub const VM_MEMORY_CARBON: c_int = VM_MEMORY_CORESERVICES;
+    pub const VM_MEMORY_JAVA: c_int = 44;
+    pub const VM_MEMORY_COREDATA: c_int = 45;
+    pub const VM_MEMORY_COREDATA_OBJECTIDS: c_int = 46;
+    pub const VM_MEMORY_ATS: c_int = 50;
+    pub const VM_MEMORY_LAYERKIT: c_int = 51;
+    pub const VM_MEMORY_CGIMAGE: c_int = 52;
+    pub const VM_MEMORY_TCMALLOC: c_int = 53;
+    pub const VM_MEMORY_COREGRAPHICS_DATA: c_int = 54;
+    pub const VM_MEMORY_COREGRAPHICS_SHARED: c_int = 55;
+    pub const VM_MEMORY_COREGRAPHICS_FRAMEBUFFERS: c_int = 56;
+    pub const VM_MEMORY_COREGRAPHICS_BACKINGSTORES: c_int = 57;
+    pub const VM_MEMORY_COREGRAPHICS_XALLOC: c_int = 58;
+    pub const VM_MEMORY_COREGRAPHICS_MISC: c_int = VM_MEMORY_COREGRAPHICS;
+    pub const VM_MEMORY_DYLD: c_int = 60;
+    pub const VM_MEMORY_DYLD_MALLOC: c_int = 61;
+    pub const VM_MEMORY_SQLITE: c_int = 62;
+    pub const VM_MEMORY_JAVASCRIPT_CORE: c_int = 63;
+    pub const VM_MEMORY_JAVASCRIPT_JIT_EXECUTABLE_ALLOCATOR: c_int = 64;
+    pub const VM_MEMORY_JAVASCRIPT_JIT_REGISTER_FILE: c_int = 65;
+    pub const VM_MEMORY_GLSL: c_int = 66;
+    pub const VM_MEMORY_OPENCL: c_int = 67;
+    pub const VM_MEMORY_COREIMAGE: c_int = 68;
+    pub const VM_MEMORY_WEBCORE_PURGEABLE_BUFFERS: c_int = 69;
+    pub const VM_MEMORY_IMAGEIO: c_int = 70;
+    pub const VM_MEMORY_COREPROFILE: c_int = 71;
+    pub const VM_MEMORY_ASSETSD: c_int = 72;
+    pub const VM_MEMORY_OS_ALLOC_ONCE: c_int = 73;
+    pub const VM_MEMORY_LIBDISPATCH: c_int = 74;
+    pub const VM_MEMORY_ACCELERATE: c_int = 75;
+    pub const VM_MEMORY_COREUI: c_int = 76;
+    pub const VM_MEMORY_COREUIFILE: c_int = 77;
+    pub const VM_MEMORY_GENEALOGY: c_int = 78;
+    pub const VM_MEMORY_RAWCAMERA: c_int = 79;
+    pub const VM_MEMORY_CORPSEINFO: c_int = 80;
+    pub const VM_MEMORY_ASL: c_int = 81;
+    pub const VM_MEMORY_SWIFT_RUNTIME: c_int = 82;
+    pub const VM_MEMORY_SWIFT_METADATA: c_int = 83;
+    pub const VM_MEMORY_DHMM: c_int = 84;
+    pub const VM_MEMORY_SCENEKIT: c_int = 86;
+    pub const VM_MEMORY_SKYWALK: c_int = 87;
+    pub const VM_MEMORY_APPLICATION_SPECIFIC_1: c_int = 240;
+    pub const VM_MEMORY_APPLICATION_SPECIFIC_16: c_int = 255;
+}
 
 pub const MAP_FAILED: *mut c_void = !0 as *mut c_void;
 
@@ -2615,14 +2804,14 @@ pub const AF_E164: c_int = AF_ISDN;
 pub const pseudo_AF_KEY: c_int = 29;
 pub const AF_INET6: c_int = 30;
 pub const AF_NATM: c_int = 31;
-pub const AF_SYSTEM: c_uchar = 32;
+pub const AF_SYSTEM: c_int = 32;
 pub const AF_NETBIOS: c_int = 33;
 pub const AF_PPP: c_int = 34;
 pub const pseudo_AF_HDRCMPLT: c_int = 35;
 pub const AF_IEEE80211: c_int = 37;
 pub const AF_UTUN: c_int = 38;
 pub const AF_VSOCK: c_int = 40;
-pub const AF_SYS_CONTROL: u16 = 2;
+pub const AF_SYS_CONTROL: c_int = 2;
 
 pub const SYSPROTO_EVENT: c_int = 1;
 pub const SYSPROTO_CONTROL: c_int = 2;
@@ -2660,7 +2849,7 @@ pub const PF_ISDN: c_int = AF_ISDN;
 pub const PF_KEY: c_int = pseudo_AF_KEY;
 pub const PF_INET6: c_int = AF_INET6;
 pub const PF_NATM: c_int = AF_NATM;
-pub const PF_SYSTEM: c_int = AF_SYSTEM as c_int;
+pub const PF_SYSTEM: c_int = AF_SYSTEM;
 pub const PF_NETBIOS: c_int = AF_NETBIOS;
 pub const PF_PPP: c_int = AF_PPP;
 pub const PF_VSOCK: c_int = AF_VSOCK;
@@ -2964,7 +3153,7 @@ pub const OS_SIGNPOST_INTERVAL_END: crate::os_signpost_type_t = 0x02;
 pub const MINSIGSTKSZ: size_t = 32768;
 pub const SIGSTKSZ: size_t = 131072;
 
-pub const FD_SETSIZE: c_int = 1024;
+pub const FD_SETSIZE: usize = 1024;
 
 pub const ST_NOSUID: c_ulong = 2;
 
@@ -3574,13 +3763,14 @@ pub const MNT_SNAPSHOT: c_int = 0x40000000;
 pub const MNT_NOBLOCK: c_int = 0x00020000;
 
 // sys/spawn.h:
-pub const POSIX_SPAWN_RESETIDS: c_short = 0x0001;
-pub const POSIX_SPAWN_SETPGROUP: c_short = 0x0002;
-pub const POSIX_SPAWN_SETSIGDEF: c_short = 0x0004;
-pub const POSIX_SPAWN_SETSIGMASK: c_short = 0x0008;
-pub const POSIX_SPAWN_SETEXEC: c_short = 0x0040;
-pub const POSIX_SPAWN_START_SUSPENDED: c_short = 0x0080;
-pub const POSIX_SPAWN_CLOEXEC_DEFAULT: c_short = 0x4000;
+// DIFF(main): changed to `c_short` in f62eb023ab
+pub const POSIX_SPAWN_RESETIDS: c_int = 0x0001;
+pub const POSIX_SPAWN_SETPGROUP: c_int = 0x0002;
+pub const POSIX_SPAWN_SETSIGDEF: c_int = 0x0004;
+pub const POSIX_SPAWN_SETSIGMASK: c_int = 0x0008;
+pub const POSIX_SPAWN_SETEXEC: c_int = 0x0040;
+pub const POSIX_SPAWN_START_SUSPENDED: c_int = 0x0080;
+pub const POSIX_SPAWN_CLOEXEC_DEFAULT: c_int = 0x4000;
 
 // sys/ipc.h:
 pub const IPC_CREAT: c_int = 0x200;
@@ -4100,16 +4290,16 @@ safe_f! {
         _WSTATUS(status) == _WSTOPPED && WSTOPSIG(status) != 0x13
     }
 
-    pub const fn makedev(major: u32, minor: u32) -> dev_t {
-        ((major << 24) | minor) as dev_t
+    pub const fn makedev(major: i32, minor: i32) -> dev_t {
+        (major << 24) | minor
     }
 
-    pub const fn major(dev: u32) -> i32 {
-        ((dev >> 24) & 0xff) as i32
+    pub const fn major(dev: dev_t) -> i32 {
+        (dev >> 24) & 0xff
     }
 
-    pub const fn minor(dev: u32) -> i32 {
-        (dev & 0xffffff) as i32
+    pub const fn minor(dev: dev_t) -> i32 {
+        dev & 0xffffff
     }
 }
 
@@ -4223,6 +4413,15 @@ extern "C" {
         newp: *mut c_void,
         newlen: size_t,
     ) -> c_int;
+    #[deprecated(since = "0.2.55", note = "Use the `mach2` crate instead")]
+    pub fn mach_absolute_time() -> u64;
+    #[deprecated(since = "0.2.55", note = "Use the `mach2` crate instead")]
+    #[allow(deprecated)]
+    pub fn mach_timebase_info(info: *mut crate::mach_timebase_info) -> c_int;
+    #[deprecated(since = "0.2.55", note = "Use the `mach2` crate instead")]
+    pub fn mach_host_self() -> mach_port_t;
+    #[deprecated(since = "0.2.55", note = "Use the `mach2` crate instead")]
+    pub fn mach_thread_self() -> mach_port_t;
     pub fn pthread_cond_timedwait_relative_np(
         cond: *mut crate::pthread_cond_t,
         lock: *mut crate::pthread_mutex_t,
@@ -4496,6 +4695,15 @@ extern "C" {
     pub fn brk(addr: *const c_void) -> *mut c_void;
     pub fn sbrk(increment: c_int) -> *mut c_void;
     pub fn settimeofday(tv: *const crate::timeval, tz: *const crate::timezone) -> c_int;
+    #[deprecated(since = "0.2.55", note = "Use the `mach2` crate instead")]
+    pub fn _dyld_image_count() -> u32;
+    #[deprecated(since = "0.2.55", note = "Use the `mach2` crate instead")]
+    #[allow(deprecated)]
+    pub fn _dyld_get_image_header(image_index: u32) -> *const mach_header;
+    #[deprecated(since = "0.2.55", note = "Use the `mach2` crate instead")]
+    pub fn _dyld_get_image_vmaddr_slide(image_index: u32) -> intptr_t;
+    #[deprecated(since = "0.2.55", note = "Use the `mach2` crate instead")]
+    pub fn _dyld_get_image_name(image_index: u32) -> *const c_char;
 
     pub fn posix_spawn(
         pid: *mut crate::pid_t,
@@ -4736,11 +4944,30 @@ extern "C" {
     pub fn CCRandomGenerateBytes(bytes: *mut c_void, size: size_t) -> crate::CCRNGStatus;
     pub fn getentropy(buf: *mut c_void, buflen: size_t) -> c_int;
 
+    // FIXME(1.0): should this actually be deprecated?
+    #[deprecated(since = "0.2.55", note = "Use the `mach2` crate instead")]
+    pub fn _NSGetExecutablePath(buf: *mut c_char, bufsize: *mut u32) -> c_int;
+
     // crt_externs.h
     pub fn _NSGetArgv() -> *mut *mut *mut c_char;
     pub fn _NSGetArgc() -> *mut c_int;
     pub fn _NSGetEnviron() -> *mut *mut *mut c_char;
     pub fn _NSGetProgname() -> *mut *mut c_char;
+
+    #[deprecated(since = "0.2.55", note = "Use the `mach2` crate instead")]
+    pub fn mach_vm_map(
+        target_task: crate::vm_map_t,
+        address: *mut crate::mach_vm_address_t,
+        size: crate::mach_vm_size_t,
+        mask: crate::mach_vm_offset_t,
+        flags: c_int,
+        object: crate::mem_entry_name_port_t,
+        offset: crate::memory_object_offset_t,
+        copy: crate::boolean_t,
+        cur_protection: crate::vm_prot_t,
+        max_protection: crate::vm_prot_t,
+        inheritance: crate::vm_inherit_t,
+    ) -> crate::kern_return_t;
 
     pub fn vm_allocate(
         target_task: vm_map_t,
@@ -4769,6 +4996,8 @@ extern "C" {
         out_processor_infoCnt: *mut mach_msg_type_number_t,
     ) -> crate::kern_return_t;
 
+    #[deprecated(since = "0.2.55", note = "Use the `mach2` crate instead")]
+    pub static mut mach_task_self_: crate::mach_port_t;
     pub fn task_for_pid(
         host: crate::mach_port_t,
         pid: crate::pid_t,
@@ -4888,6 +5117,12 @@ extern "C" {
     );
 }
 
+#[allow(deprecated)]
+#[deprecated(since = "0.2.55", note = "Use the `mach2` crate instead")]
+pub unsafe fn mach_task_self() -> crate::mach_port_t {
+    mach_task_self_
+}
+
 cfg_if! {
     if #[cfg(target_os = "macos")] {
         extern "C" {
@@ -4917,6 +5152,25 @@ cfg_if! {
             ) -> crate::kern_return_t;
         }
     }
+}
+
+// These require a dependency on `libiconv`, and including this when built as
+// part of `std` means every Rust program gets it. Ideally we would have a link
+// modifier to only include these if they are used, but we do not.
+#[cfg_attr(not(feature = "rustc-dep-of-std"), link(name = "iconv"))]
+extern "C" {
+    #[deprecated(note = "Will be removed in 1.0 to avoid the `iconv` dependency")]
+    pub fn iconv_open(tocode: *const c_char, fromcode: *const c_char) -> iconv_t;
+    #[deprecated(note = "Will be removed in 1.0 to avoid the `iconv` dependency")]
+    pub fn iconv(
+        cd: iconv_t,
+        inbuf: *mut *mut c_char,
+        inbytesleft: *mut size_t,
+        outbuf: *mut *mut c_char,
+        outbytesleft: *mut size_t,
+    ) -> size_t;
+    #[deprecated(note = "Will be removed in 1.0 to avoid the `iconv` dependency")]
+    pub fn iconv_close(cd: iconv_t) -> c_int;
 }
 
 cfg_if! {

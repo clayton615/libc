@@ -182,6 +182,11 @@ s! {
         pub l_linger: c_int,
     }
 
+    pub struct sigval {
+        // Actually a union of an int and a void*
+        pub sival_ptr: *mut c_void,
+    }
+
     // <sys/time.h>
     pub struct itimerval {
         pub it_interval: crate::timeval,
@@ -218,29 +223,6 @@ s! {
     #[repr(align(4))]
     pub struct in6_addr {
         pub s6_addr: [u8; 16],
-    }
-}
-
-s_no_extra_traits! {
-    pub union sigval {
-        pub sival_int: c_int,
-        pub sival_ptr: *mut c_void,
-    }
-}
-
-cfg_if! {
-    if #[cfg(feature = "extra_traits")] {
-        impl PartialEq for sigval {
-            fn eq(&self, _other: &sigval) -> bool {
-                unimplemented!("traits")
-            }
-        }
-        impl Eq for sigval {}
-        impl hash::Hash for sigval {
-            fn hash<H: hash::Hasher>(&self, _state: &mut H) {
-                unimplemented!("traits")
-            }
-        }
     }
 }
 
@@ -1073,10 +1055,15 @@ extern "C" {
     pub fn execl(path: *const c_char, arg0: *const c_char, ...) -> c_int;
     pub fn execle(path: *const c_char, arg0: *const c_char, ...) -> c_int;
     pub fn execlp(file: *const c_char, arg0: *const c_char, ...) -> c_int;
-    pub fn execv(prog: *const c_char, argv: *const *mut c_char) -> c_int;
-    pub fn execve(prog: *const c_char, argv: *const *mut c_char, envp: *const *mut c_char)
-        -> c_int;
-    pub fn execvp(c: *const c_char, argv: *const *mut c_char) -> c_int;
+
+    // DIFF(main): changed to `*const *mut` in e77f551de9
+    pub fn execv(prog: *const c_char, argv: *const *const c_char) -> c_int;
+    pub fn execve(
+        prog: *const c_char,
+        argv: *const *const c_char,
+        envp: *const *const c_char,
+    ) -> c_int;
+    pub fn execvp(c: *const c_char, argv: *const *const c_char) -> c_int;
 
     pub fn fork() -> pid_t;
     pub fn fpathconf(filedes: c_int, name: c_int) -> c_long;

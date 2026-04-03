@@ -42,9 +42,6 @@ aio_suspend
 aio_waitn
 aio_write
 aiocb
-arc4random
-arc4random_buf
-arc4random_uniform
 bind
 in6_pktinfo
 in_pktinfo
